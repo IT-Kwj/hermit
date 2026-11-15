@@ -1,0 +1,27 @@
+{
+ "title_id": "0100F28011892000",
+ "name": "Overcooked! All You Can Eat",
+ "version": "1.0.12",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v786432"
+   ],
+   "version_names": {
+    "v786432": "1.0.12"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "b12d29771b1aa0b777c5c61d102c26b75b81d07e"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.12) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

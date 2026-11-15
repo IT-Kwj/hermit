@@ -6,7 +6,7 @@ Built with [nxnative](https://github.com/seedds/nxnative)'s profile `dm/games/01
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/010015100B514000`](https://github.com/seedds/nxnative/tree/a2514d7def4e35f3c47f8792af9e6ad31c90ace9/dm/games/010015100B514000) |
+| Profile and notes | [nxnative `dm/games/010015100B514000`](https://github.com/seedds/nxnative/tree/ad1ee5bfa26ac2226766207a9b528f1808e91ba7/dm/games/010015100B514000) |
 | Input | the base game (.xci or .nsp) and, optionally, its update .nsp |
 
 ## Shared shader list

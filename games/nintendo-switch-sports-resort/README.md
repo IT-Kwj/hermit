@@ -1,12 +1,12 @@
 # Nintendo Switch Sports Resort
 
-Title ID `04008E001F098000`, update v65536. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/15316fd98290cace7782d59e7e83b03f113eac05/dm/games/04008E001F098000) for how far it plays and on which Mac.
+Title ID `04008E001F098000`, update v65536. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/a3b5230f2c9876e595057e0f4315b09b40fb3da3/dm/games/04008E001F098000) for how far it plays and on which Mac.
 
 Built with nxnative's own builder at the commit `game.json` names (fetched once into `./engines`), with Hermit's front end added (`tools/engine/patch.py`): the game starts at once, **key 1** is the performance overlay and **key 2** the settings.
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/04008E001F098000`](https://github.com/seedds/nxnative/tree/15316fd98290cace7782d59e7e83b03f113eac05/dm/games/04008E001F098000) |
+| Profile and notes | [nxnative `dm/games/04008E001F098000`](https://github.com/seedds/nxnative/tree/a3b5230f2c9876e595057e0f4315b09b40fb3da3/dm/games/04008E001F098000) |
 | Dump folder | `base/` and `updates/65536/` |
 
 ## Shared shader list
