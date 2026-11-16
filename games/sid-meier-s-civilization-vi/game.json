@@ -1,0 +1,27 @@
+{
+ "title_id": "010044500C182000",
+ "name": "Sid Meier's Civilization VI",
+ "version": "1.2.19",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v1638400"
+   ],
+   "version_names": {
+    "v1638400": "1.2.19"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "7b67bfe0a76190558299aed1d8f90a2a4de118ae"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.2.19) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

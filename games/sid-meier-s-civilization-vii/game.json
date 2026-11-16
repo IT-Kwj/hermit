@@ -1,0 +1,27 @@
+{
+ "title_id": "0100C3601518C000",
+ "name": "Sid Meier's Civilization VII",
+ "version": "1.5.0.1",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v1638400"
+   ],
+   "version_names": {
+    "v1638400": "1.5.0.1"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "730738e7c24b4b3ea2875c6085077692be928648"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.5.0.1) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

@@ -1,0 +1,27 @@
+{
+ "title_id": "01005FF002E2A000",
+ "name": "Rayman Legends: Definitive Edition",
+ "version": "1.2",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v131072"
+   ],
+   "version_names": {
+    "v131072": "1.2"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "eb2e27f8f16b6cf6133a665040f906b6e69d74fc"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.2) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

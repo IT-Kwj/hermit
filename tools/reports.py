@@ -36,7 +36,7 @@ def fields(body):   # an issue form's answers: "### Label" headings, each follow
 def which_build(g, label, version, commit):   # the game's build a report is about: its own id or name in the Build answer (kid-with-sword, mkw-neo, ...), then the
     # version's commit as a build pins it (the overlay's Engine line says "nxnative <commit>" for every build made on nxnative), then its project in the version
     # (kid-with-sword-remake), then the general words; None when nothing says
-    bs = S2M.builds(g)
+    bs = S2M.builds(g) + S2M.untested_builds(g)
     generic = set(BUILD_LABELS) | set(BUILD_LABELS.values())
     for b in sorted(bs, key=lambda b: -len(b['id'])):
         if b['id'] not in generic and (b['id'] in label or (b.get('name') or '').lower() in (label,)): return b['id']
@@ -46,7 +46,7 @@ def which_build(g, label, version, commit):   # the game's build a report is abo
     for b in bs:
         repo = b['engine'].get('repo', '').rstrip('/').rsplit('/', 1)[-1].lower()
         if repo and repo not in generic and repo in version: return b['id']
-    if 'untested' in label: return 'untested'
+    if 'untested' in label: return next((b['id'] for b in bs if b['id'] == 'nxnative-untested'), next((b['id'] for b in bs if b.get('untested')), 'untested'))
     ids = {b['id'] for b in bs}
     for k, v in BUILD_LABELS.items():
         if k in label: return v if v in ids or v == 'untested' else (k if k in ids else v)
@@ -73,8 +73,8 @@ def from_issue(issue):
     m = re.search(r'\b([0-9a-f]{7,12})\b', version)
     bid = which_build(g, label, version.lower(), m[1] if m else '')
     if not bid: bid = S2M.recommend(g, {'generation': int(chip[1]), 'memory_gb': int(mem[1])})[0]
-    pin = next((b['engine']['commit'] for b in S2M.builds(g) if b['id'] == bid), '')
-    build = f'{bid} {m[1][:8]}' if m else (f'{bid} {pin[:8]}' if pin else bid)
+    pin = next((b['engine']['commit'] for b in S2M.builds(g) + S2M.untested_builds(g) if b['id'] == bid), '')
+    build = f'{bid} {m[1][:8]}' if m else (f'{bid} {pin[:8]}' if pin and not bid.endswith('untested') else bid)   # an untested build's pin moves often: no guess
     macos = re.search(r'\d+(?:\.\d+){0,2}', plain(f.get('macOS version'), 20))
     used = re.search(r'\d+(?:\.\d+)?', plain(f.get('Memory used (optional)'), 20))
     fps = re.search(r'\d+(?:\s*-\s*\d+)?', plain(f.get('Frame rate'), 40))

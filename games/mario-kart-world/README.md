@@ -9,18 +9,19 @@ Title ID `0400C3F00006E000`. Profile: [`dm/games/0400C3F00006E000` in hermit-bui
 
 > **16 GB Macs:** Mario Kart World currently needs about 13-16 GB of memory, up to about 20 GB in long free roam, so on a 16 GB Mac it may not run smoothly. Optimizations are under way ([Known issues](#known-issues)).
 
-## Four builds
+## Five builds
 
-Mario Kart World can be built four ways. Same game, same save; each has its own shared shader list.
+Mario Kart World can be built five ways. Same game, same save; each has its own shared shader list.
 
 | Build (`--engine`) | Engine | Game version | Suits | Why |
 |---|---|---|---|---|
 | `switch2mac` (in the app: azmasm's build) | [hermit-builds](https://github.com/azmasm/hermit-builds) | 1.0.0 | M1 and M2 with 24 GB or more | Faster there (about 58 fps against 47 on an M1 Max); Performance mode; the run-time shaders taken from the dump |
 | `nxnative` | upstream nxnative (commit in `game.json`) | 1.0.0 | M3 and newer, and Macs with 17-23 GB | nxnative's own Switch 2 shader translator runs better on newer chips; shares terrain tiles, so it needs less memory |
 | `mkw-neo` | [MenAtCafe/mkw-neo](https://github.com/MenAtCafe/mkw-neo) (MIT) | 1.0.0 | 16 GB or less, and every MacBook Air | Tuned to fit 8 GB: a race holds about 4 GB (40-58 fps on a MacBook Neo, every course played) |
-| `nxnative-mkw` | [Thijs2004/nxnative-mkw](https://github.com/Thijs2004/nxnative-mkw) (MIT) | 1.8.0 (update v917504) | any Mac whose dump has the 1.8.0 update | The only build here with a 1.8.0 profile |
+| `no-lag-kart` | [kingbumi31/no-lag-kart](https://github.com/kingbumi31/no-lag-kart) (MIT) | 1.8.0 (update v917504) | any Mac whose dump has the 1.8.0 update | nxnative tuned for 1.8.0: 23 fixes and a 15,000-pipeline warm-up list; its author measured 60 fps with 1 or 2 players and 30 with 4, almost no hitches, on an M2 Pro with 16 GB (other Macs not tested yet) |
+| `nxnative-mkw` | [Thijs2004/nxnative-mkw](https://github.com/Thijs2004/nxnative-mkw) (MIT) | 1.8.0 (update v917504) | any Mac whose dump has the 1.8.0 update | The first 1.8.0 build (unchanged since 6 November) |
 
-`./hermit.py build` picks one for your dump and your Mac (`game.json` "choose", first rule that fits): a dump with the 1.8.0 update gets `nxnative-mkw`; otherwise 16 GB or less or a MacBook Air gets `mkw-neo`, less than 24 GB or an M3 and newer `nxnative`, and the rest `switch2mac` (azmasm's build). `./hermit.py builds <dump>` shows the choice, why, and how each ran on players' Macs (`reports.tsv`). `--engine <id>` builds another one; the Hermit app has a Build menu for it. Installing another build keeps your save; the old build's pipeline record is put aside, since the engines name shaders differently.
+`./hermit.py build` picks one for your dump and your Mac (`game.json` "choose", first rule that fits): a dump with the 1.8.0 update gets `no-lag-kart` (`nxnative-mkw` is the other choice); otherwise 16 GB or less or a MacBook Air gets `mkw-neo`, less than 24 GB or an M3 and newer `nxnative`, and the rest `switch2mac` (azmasm's build). `./hermit.py builds <dump>` shows the choice, why, and how each ran on players' Macs (`reports.tsv`). `--engine <id>` builds another one; the Hermit app has a Build menu for it. Installing another build keeps your save; the old build's pipeline record is put aside, since the engines name shaders differently.
 
 ## Build
 
@@ -108,4 +109,4 @@ An update has other build IDs, and from 1.8.0 on also a `subsdk1` module and a n
 2. Add a `build` line for it in `game.tsv` (the IDs are printed when `build` stops) and the modules in its `modules` line, then run `build` again.
 3. Expect differences: the update may move functions the rewriter patches, and the original 1.8.0 patch series found the movie player changed (1.8.0 decodes through `movie::VideoDecoder`, 1.0.0 through `nn::codec`; both are handled in hermit-builds' `dm/host`).
 
-Please report what happens (log + screenshots, no game files). Mark such builds as untested. For 1.8.0 there is now a tested build, `nxnative-mkw` (above).
+Please report what happens (log + screenshots, no game files). Mark such builds as untested. For 1.8.0 there are now two builds, `no-lag-kart` and `nxnative-mkw` (above).

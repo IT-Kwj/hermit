@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-15 (1)
+
+- **Mario Kart World 1.8.0 has a new build: No Lag Kart**, kingbumi31's version of nxnative tuned for update 1.8.0 (MIT). On its author's M2 Pro it holds 60 fps with one or two players and 30 with four in split screen, with almost no hitches. Hermit now picks it for a dump with the 1.8.0 update; Thijs2004's 1.8.0 version stays in the Build menu. It has been tested on one Mac so far: a "How it ran" report helps others with a Mac like yours.
+
 ## 2026-11-13 (1)
 
 - **Hermit now removes a game's leftover build files once the game is installed** (the game unpacked, temporary files and the build's engine download: often tens of GB). The shader caches stay, so a rebuild is still quick.

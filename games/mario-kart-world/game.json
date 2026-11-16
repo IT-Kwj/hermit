@@ -26,7 +26,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "a4705fe1a98df98701973c262ece62e4bf56b6f5"
+    "commit": "fb26adfc9e95e1c3f565e1874b6e7ac3426ec92f"
    },
    "shader_list": "shader_list-nxnative.tsv",
    "about": "Upstream nxnative with Hermit's overlay and key-2 settings: its own Switch 2 shader translator and shared terrain tiles (less memory). Suits M3 and newer.",
@@ -53,18 +53,20 @@
    "nup_needs_base": true
   },
   {
-   "id": "nxnative-180",
-   "name": "nxnative (1.8.0)",
+   "id": "no-lag-kart",
+   "name": "No Lag Kart (1.8.0)",
    "engine": {
     "kind": "nxnative",
-    "repo": "https://github.com/seedds/nxnative",
-    "commit": "a4705fe1a98df98701973c262ece62e4bf56b6f5"
+    "repo": "https://github.com/kingbumi31/no-lag-kart",
+    "commit": "033cbe594bf8e0553320bc1dc343869921b541d2"
    },
    "versions": [
     "v917504"
    ],
-   "shader_list": "shader_list-nxnative-180.tsv",
-   "about": "Latest nxnative with Hermit's overlay and settings, building 1.8.0 from a profile derived from v0: tested on an M3 Max 36 GB. Replaces the old nxnative-mkw build; its profile is not registered by upstream yet.",
+   "watch": [
+    ""
+   ],
+   "about": "kingbumi31's No Lag Kart (MIT): nxnative tuned for Mario Kart World 1.8.0 (update v917504), with 23 fixes and a 15,000-pipeline warm-up list. Its author measured 60 fps with 1 or 2 players and 30 with 4 on an M2 Pro with 16 GB, with almost no hitches; other Macs are not tested yet, and a smaller GPU may not hold those rates.",
    "nup_needs_base": true,
    "version_names": {
     "v917504": "1.8.0"
@@ -72,7 +74,7 @@
   },
   {
    "id": "nxnative-mkw",
-   "name": "nxnative-mkw (legacy 1.8.0)",
+   "name": "Thijs2004's 1.8.0 version",
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/Thijs2004/nxnative-mkw",
@@ -85,7 +87,7 @@
    "watch": [
     ""
    ],
-   "about": "Legacy Thijs2004 nxnative port for Mario Kart World 1.8.0 (update v917504) (MIT): kept as a manual fallback only; the current 1.8.0 build is nxnative-180.",
+   "about": "Thijs2004's nxnative port for Mario Kart World 1.8.0 (update v917504) (MIT): the other build here for a dump with the 1.8.0 update (unchanged since 6 November).",
    "nup_needs_base": true,
    "version_names": {
     "v917504": "1.8.0"
@@ -94,8 +96,12 @@
  ],
  "choose": [
   {
-   "build": "nxnative-180",
-   "why": "Your dump has the 1.8.0 update: latest nxnative, tested on an M3 Max"
+   "build": "no-lag-kart",
+   "why": "Your dump has the 1.8.0 update: No Lag Kart plays it with almost no stutter (Thijs2004's 1.8.0 version is the other choice)"
+  },
+  {
+   "build": "nxnative-mkw",
+   "why": "Your dump has the 1.8.0 update: Thijs2004's version plays it too"
   },
   {
    "memory_max": 16,
