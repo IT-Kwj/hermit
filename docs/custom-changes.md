@@ -525,3 +525,17 @@ DM_FOCUS_KEEP=1
      `patch.py` 或 `s2m_launcher.swift`。
    - 每次构建后也必须做一次这项检查，不能只看构建是否成功。
 
+#### 2026-11-16：上游新增 No Lag Kart，采用新的 1.8.0 构建
+
+- 上游 `game.json` 新增 `no-lag-kart`（kingbumi31，MIT，commit `033cbe594bf8`）：
+  nxnative 的 1.8.0 专用构建，23 项修复和 15,000 条 pipeline 预热列表；
+  上游将其列为 1.8.0 的首选构建。
+- 已按“1.8.0 支持变化就使用新版”的规则采用 `no-lag-kart`，删除本地临时的
+  `nxnative-180` 构建和 `shader_list-nxnative-180.tsv`。
+- 最新 nxnative pin 也从 `a4705fe1` 更新到 `fb26adfc`；`mkw-neo` 更新到
+  `304f24ee`。`nxnative-mkw` 仍作为上游的另一个 1.8.0 手动选择保留。
+- 启动页和 2 键的 `patch.py` / `s2m_launcher.swift` / `s2m_ui.m` 自定义仍在；
+  本次上游没有新增需要补译的 MKW 设置行，实际构建后仍需按固定清单复查。
+- 当前已安装 App 仍使用旧的 `a4705fe1` 派生构建；要使用官方新的
+  `no-lag-kart` 需要重新构建。
+
