@@ -565,16 +565,24 @@ DM_FOCUS_KEEP=1
 
 #### 2026-11-16 构建后占用与可清理项
 
-按“只检查、不删除”处理，本次没有删构建缓存：
+构建后先按“只检查、不删除”处理，随后只清理了已确认的旧运行时缓存和旧引擎：
 
 - `/Applications/Mario Kart World.app`：23 GB（正式安装包）
 - `work/0400C3F00006E000`：27 GB，可重建；其中 `extract` 约 22 GB、
   `shader` 约 3.4 GB、`pso` 约 1.1 GB。
 - `builds/dk`：25 GB，大金刚的历史构建文件夹；删除后重编大金刚会明显变慢，
   但不影响当前已安装的大金刚 App 和存档。
-- `engines/` 下现有 4 份 nxnative 源码副本，共约 2.8 GB。它们仍被仓库内
-  其他游戏的 `game.json` 引用，不能按“无用引擎”直接删除。
-- 当前磁盘可用约 33 GB。马车下次重编已有 shader 缓存，构建前若仍报
+- 已删除旧运行时缓存 `pso_archive.nxnative`、`pso_archive.switch2mac`
+  及对应的旧 `pso_user` / shader-list contribution，避免切换到旧构建时
+  继续复用它们。
+- 已删除旧引擎 `nxnative-b1c5e4e53019`、`nxnative-3304d6a0d7ed` 和
+  `nxnative-a2514d7def4e`；`engines/` 只保留当前 No Lag Kart 使用的
+  `nxnative-033cbe594bf8`（约 825 MB）。以后构建仍引用旧 commit 的游戏时，
+  Hermit 会重新下载对应源码。
+- 当前 No Lag Kart 的 `pso_archive`、`pso_user.tsv`、`save`、`save.work`
+  和 `env.txt` 全部保留。
+- 本次实际释放约 4.1 GiB，磁盘可用从约 30 GiB 增加到约 34 GiB。
+  马车下次重编已有 shader 缓存，构建前若仍报
   “first build needs 50 GB”，可在确认缓存和磁盘余量后使用
   `S2M_SKIP_DISK_CHECK=1`。
 
