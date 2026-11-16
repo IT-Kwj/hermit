@@ -2,7 +2,7 @@
 
 本文档记录在本机对 switch2mac 项目做的自定义修改。合并上游最新代码、或引擎被重新拉取后，按这里的说明恢复这些改动。
 
-更新时间：2026-11-10
+更新时间：2026-11-16
 
 ## 修改总览
 
@@ -503,19 +503,18 @@ DM_FOCUS_KEEP=1
 1. **1.8.0 支持是否变化**
    - 检查 `games/mario-kart-world/game.json` 是否新增了官方 1.8.0 构建，
      以及 nxnative PR #1252 / #2621 是否已经合并。
-   - 如果上游已经正式注册 1.8.0：删除本地临时的 `nxnative-180` 和
-     `shader_list-nxnative-180.tsv`，改用上游推荐的构建。
-   - 如果还没有变化：继续使用当前 `nxnative-180`，不要回退到旧
-     `nxnative-mkw`（实测 bug 多）。
+   - 当前上游正式推荐的 1.8.0 构建是 `no-lag-kart`
+     （`033cbe594bf8`）。如果上游换了新的正式推荐构建，就采用新构建。
+   - 如果推荐没有变化，继续使用 `no-lag-kart`。不要回退到旧
+     `nxnative-mkw`（实测 bug 多）；本地临时 `nxnative-180` 已删除。
 
 2. **nxnative 是否更新**
-   - 对比 `games/mario-kart-world/game.json` 的 `nxnative` commit 与
-     `nxnative-180` 的 commit。
-   - 如果最新 nxnative 更新了：同步更新 `nxnative-180` 的 commit，并更新
-     `games/mario-kart-world/shader_list-nxnative-180.tsv` 第一行的
-     `engine=nxnative-<commit12>`。
+   - 对比 `games/mario-kart-world/game.json` 的 `no-lag-kart` commit 是否变化。
+     普通 `nxnative` pin 更新不等于 `no-lag-kart` 更新，不能自动替换 1.8.0 构建。
+   - 如果 `no-lag-kart` 更新了：检查其 `mkw/pso` 预热列表、1.8.0 profile 和
+     构建说明，再重新构建。
    - 检查 `tools/engine/patch.py` 的锚点是否仍匹配，特别是
-     `settings.tsv`、`hle_net.c` 和 launcher 补丁。
+     `settings.tsv`、`hle_net.c`、`pso_offline.py` 和 launcher 补丁。
 
 3. **启动页和 2 键汉化**
    - 检查 `tools/engine/s2m_launcher.swift` 的启动页面（“准备开玩”
@@ -536,6 +535,46 @@ DM_FOCUS_KEEP=1
   `304f24ee`。`nxnative-mkw` 仍作为上游的另一个 1.8.0 手动选择保留。
 - 启动页和 2 键的 `patch.py` / `s2m_launcher.swift` / `s2m_ui.m` 自定义仍在；
   本次上游没有新增需要补译的 MKW 设置行，实际构建后仍需按固定清单复查。
-- 当前已安装 App 仍使用旧的 `a4705fe1` 派生构建；要使用官方新的
-  `no-lag-kart` 需要重新构建。
+
+#### 2026-11-16：`no-lag-kart` 1.8.0 实际构建
+
+- 构建命令使用官方推荐的 `--engine no-lag-kart`，游戏版本 v917504（1.8.0），
+  logo 使用用户提供的 `Mario Kart World.png`。
+- Shader：11,601 个全部成功；没有再出现旧构建的 Ampere instruction 481 失败。
+- 离线 pipeline archive：501.6 MB；9591 个 base、728 个 compute pipeline。
+- 发现 `pso_offline.py` 默认每组 1000 个 base 时，第 3 组在本机
+  `metal-tt/applegpu-nt` 中持续运行 1 小时 14 分钟，远超该构建文档记录的
+  pipeline archive 约 2 分半。终止后把 No Lag Kart 的批次上限改为
+  200，完整 archive 用 2 分 16 秒生成。
+- `tools/engine/patch.py` 增加 `no_lag_pso_batch()`，只对含 No Lag Kart
+  1.8.0 预热列表的引擎副本应用 200 批大小；普通 nxnative 游戏不受影响。
+- 新上游把设置行条件改为 `DM_GAME_PRESENT_UPSCALE` 和
+  `DM_GAME_FULLSCREEN`，原来的英文匹配锚点因此失效。已补上这两条当前格式：
+  “画面放大 / 标准”和“显示模式 / 窗口 / 全屏”现在都是中文。
+- `launcher.json` 全部 18 个设置项已复查；除 MetalFX、Metal 4、GPU、CPU、
+  FPS、Switch 2、Joy-Con 2、Pro Controller 2 等产品或硬件的正式名称外，
+  label、note 和选项都有中文。启动页源码和 2 键宿主源码的标题、说明、
+  高级设置、云存档、分区与锁定/变更提示也已复查。
+- App：23.3 GB，已安装到 `/Applications/Mario Kart World.app`；
+  `CFBundleShortVersionString` 为 1.8.0，`AppIcon.icns` 正常，
+  ad-hoc 签名验证通过。
+- 存档保留在
+  `~/Library/Application Support/nxnative/0400C3F00006E000/save/Play/account.sav`
+  （844 KB）；旧 run 存档 `builds/mkw/run/save/Play/account.sav` 未动。
+  `DM_FOCUS_KEEP=1` 也仍在 Application Support 的 `env.txt`。
+
+#### 2026-11-16 构建后占用与可清理项
+
+按“只检查、不删除”处理，本次没有删构建缓存：
+
+- `/Applications/Mario Kart World.app`：23 GB（正式安装包）
+- `work/0400C3F00006E000`：27 GB，可重建；其中 `extract` 约 22 GB、
+  `shader` 约 3.4 GB、`pso` 约 1.1 GB。
+- `builds/dk`：25 GB，大金刚的历史构建文件夹；删除后重编大金刚会明显变慢，
+  但不影响当前已安装的大金刚 App 和存档。
+- `engines/` 下现有 4 份 nxnative 源码副本，共约 2.8 GB。它们仍被仓库内
+  其他游戏的 `game.json` 引用，不能按“无用引擎”直接删除。
+- 当前磁盘可用约 33 GB。马车下次重编已有 shader 缓存，构建前若仍报
+  “first build needs 50 GB”，可在确认缓存和磁盘余量后使用
+  `S2M_SKIP_DISK_CHECK=1`。
 

@@ -78,6 +78,7 @@ def main():
         st.write_text(s.replace(w, row + w, 1)); print('  settings.py: Performance overlay row')
     settings_zh(nx)
     hle_net_poll(nx)
+    no_lag_pso_batch(nx)
 
 
 def hle_net_poll(nx):   # cap the offline poll/select idle wait at 100 ms: Mario Kart World otherwise stalls for ~14 s at "return to home" / before the course select (0 fps)
@@ -88,6 +89,17 @@ def hle_net_poll(nx):   # cap the offline poll/select idle wait at 100 ms: Mario
         path.write_text(s.replace(old, new, 1)); print('  hle_net.c: poll idle capped at 100 ms')
 
 
+def no_lag_pso_batch(nx):   # No Lag Kart's 1.8.0 archive: a 1000-base batch spent over an hour in metal-tt on this Mac; 200-base batches finish it in about 2 minutes
+    marker = nx / 'mkw/pso/pso_manifest_merged_180.tsv'
+    path = nx / 'dm/gfx/tools/pso_offline.py'
+    if not marker.is_file() or not path.is_file(): return
+    s = path.read_text()
+    old = "BATCH = 1000   # bases per metal-tt run: Odyssey's largest compiler lifetime footprint at this size was 2.065 GiB on an 8 GB M2"
+    new = "BATCH = 200   # (switch2mac) No Lag Kart's 1.8.0 archive: 1000-base batch 3 spent over an hour in metal-tt on this Mac"
+    if old in s:
+        path.write_text(s.replace(old, new, 1)); print('  pso_offline.py: No Lag Kart pipeline batches capped at 200 bases')
+
+
 def settings_zh(nx):   # switch2mac's Chinese labels/notes for the generic rows a game's key-2 panel shows (idempotent: the English lines are gone after the first run)
     path = nx / 'dm/games/settings.tsv'; s = path.read_text(); changed = False
     for old, new in (
@@ -95,10 +107,14 @@ def settings_zh(nx):   # switch2mac's Chinese labels/notes for the generic rows 
          "DM_OPMODE\tchoice\t1=底座模式,0=掌机模式\tDM_GAME_OPMODE\talways\tGame\t主机模式\t\tlevel=basic"),
         ("DM_PRESENT_UPSCALE\tchoice\toff=Standard,metalfx=MetalFX\toff\talways\tGame\tUpscaling\tUses more GPU time and can increase heat.",
          "DM_PRESENT_UPSCALE\tchoice\toff=标准,metalfx=MetalFX\toff\talways\tGame\t画面放大\t会占用更多 GPU 时间，可能增加发热。"),
+        ("DM_PRESENT_UPSCALE\tchoice\toff=Standard,metalfx=MetalFX\tDM_GAME_PRESENT_UPSCALE\talways\tGame\tUpscaling\tUses more GPU time and can increase heat.",
+         "DM_PRESENT_UPSCALE\tchoice\toff=标准,metalfx=MetalFX\tDM_GAME_PRESENT_UPSCALE\talways\tGame\t画面放大\t会占用更多 GPU 时间，可能增加发热。"),
         ("DM_LANG\tchoice\tlanguages\tbuild:DM_LANG\tlanguages>1\tGame\tGame language\t\tlevel=basic",
          "DM_LANG\tchoice\tlanguages\tbuild:DM_LANG\tlanguages>1\tGame\t游戏语言\t\tlevel=basic"),
         ("DM_FULLSCREEN\tchoice\t0=Window,1=Fullscreen\t0\tplatform:mac\tGame\tDisplay mode\t\tlevel=basic",
          "DM_FULLSCREEN\tchoice\t0=窗口,1=全屏\t0\tplatform:mac\tGame\t显示模式\t\tlevel=basic"),
+        ("DM_FULLSCREEN\tchoice\t0=Window,1=Fullscreen\tDM_GAME_FULLSCREEN\tplatform:mac\tGame\tDisplay mode\t\tlevel=basic",
+         "DM_FULLSCREEN\tchoice\t0=窗口,1=全屏\tDM_GAME_FULLSCREEN\tplatform:mac\tGame\t显示模式\t\tlevel=basic"),
         ("DM_UPSCALER\tchoice\tgame=Game's own,metalfx=MetalFX\tgame\tDM_GAME_UPSCALER_N!=0\tGame\tGame's upscaler",
          "DM_UPSCALER\tchoice\tgame=游戏自带,metalfx=MetalFX\tgame\tDM_GAME_UPSCALER_N!=0\tGame\t游戏内置升频器"),
         ("DM_RUMBLE\ttoggle\t-\t1\talways\tControls\tGame rumble\t\tlevel=basic",
