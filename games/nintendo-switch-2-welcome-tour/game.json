@@ -1,0 +1,11 @@
+{
+ "title_id": "040057C02159A000",
+ "name": "Nintendo Switch 2 Welcome Tour",
+ "version": "update v262144",
+ "engine": {
+  "kind": "nxnative",
+  "repo": "https://github.com/seedds/nxnative",
+  "commit": "d6bb5894ce6f4a59c82f58717461c7e2d9132cf5"
+ },
+ "disk_gb": 50
+}

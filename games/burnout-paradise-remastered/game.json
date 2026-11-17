@@ -1,0 +1,27 @@
+{
+ "title_id": "0100DBF01000A000",
+ "name": "Burnout Paradise Remastered",
+ "version": "1.0.0",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v0"
+   ],
+   "version_names": {
+    "v0": "1.0.0"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "4b50e4325461ad309e94802b13b7fef3793e154a"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.0) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

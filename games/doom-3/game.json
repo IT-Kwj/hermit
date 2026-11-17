@@ -1,0 +1,27 @@
+{
+ "title_id": "010029D00E740000",
+ "name": "DOOM 3",
+ "version": "1.0.5",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v327680"
+   ],
+   "version_names": {
+    "v327680": "1.0.5"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "e6a358f5c1311c5a320e749a7ce3ddfd60ae1c7b"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.5) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

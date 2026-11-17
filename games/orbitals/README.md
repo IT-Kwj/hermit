@@ -1,12 +1,12 @@
 # Orbitals
 
-Title ID `040032B023CA4000`, update v327680. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/f7096458da98adcae46dc1a4b5e9c9ca07d778b9/dm/games/040032B023CA4000) for how far it plays and on which Mac.
+Title ID `040032B023CA4000`, update v327680. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/d6b5fc1b08682f62da34f01350fc984a6d9a347f/dm/games/040032B023CA4000) for how far it plays and on which Mac.
 
 Built with nxnative's own builder at the commit `game.json` names (fetched once into `./engines`), with Hermit's front end added (`tools/engine/patch.py`): the game starts at once, **key 1** is the performance overlay and **key 2** the settings.
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/040032B023CA4000`](https://github.com/seedds/nxnative/tree/f7096458da98adcae46dc1a4b5e9c9ca07d778b9/dm/games/040032B023CA4000) |
+| Profile and notes | [nxnative `dm/games/040032B023CA4000`](https://github.com/seedds/nxnative/tree/d6b5fc1b08682f62da34f01350fc984a6d9a347f/dm/games/040032B023CA4000) |
 | Dump folder | `base/` and `updates/327680/` |
 
 ## Shared shader list
