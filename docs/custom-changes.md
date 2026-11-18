@@ -691,3 +691,16 @@ DM_FOCUS_KEEP=1
   加最后 `.zip`，总占用约 24 GB。`Mario Kart World Universal 16GB+.sha256`
   已逐卷校验通过，SPLIT-README 记录 Keka 和命令行解压方式。
 
+#### 2026-11-18：清理多 GPU 通用产物
+
+- 网盘上传完成后，删除 `work/Mario Kart World Universal 16GB+ upload/`
+  和 `work/Mario Kart World Universal 16GB+.app`，并删除通用构建日志。
+- `pso/mac` 只保留本机 M3 Max 的 `applegpu_g15s.mtl4a`；其余 10 个 GPU
+  的最终 archive 删除。
+- `pso/mac-work` 只保留 `batches.applegpu_g15s`、`key.applegpu_g15s`
+  及 g15s 的合并日志；其余 10 个 GPU 的批次和 key 删除。
+- 实际释放约 35.2 GiB，磁盘可用从约 49.8 GiB 增加到约 85.1 GiB。
+- 保留当前 `/Applications/Mario Kart World.app`、全部存档和运行
+  `pso_archive`，以及下次本机构建需要的 `extract`、`shader`、引擎源码、
+  g15s archive 和 g15s 批次缓存。
+
