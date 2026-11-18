@@ -2,7 +2,7 @@
 
 Title ID `0100B99019412000`. A **Switch** game: built from your own copy's `.xci` / `.nsp` files with your own `prod.keys` (see [LEGAL.md](../../LEGAL.md)). Version 1.0.1.
 
-Built with [MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT): its [`games/mvdk`](https://github.com/ly05010419/MacNativeGames/tree/03954f7fd57d484688953cfd18167c34f9de5f1b/games/mvdk) port, at the commit `game.json` names, run through that port's own builder as its README describes. Community port, early. Base game (.nsp or .xci) and the 1.0.1 update (required); your firmware for the system fonts. It has its own runtime, so Hermit's overlay and key-2 settings are not added: the port has its own. Needs Homebrew's `python@3.14`, `opus` and `libvpx`.
+Built with [MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT): its [`games/mvdk`](https://github.com/ly05010419/MacNativeGames/tree/48779087765fe0d4ce16a2ea1e6618381d4cb701/games/mvdk) port, at the commit `game.json` names, run through that port's own builder as its README describes. Community port, early. Base game (.nsp or .xci) and the 1.0.1 update (required); your firmware for the system fonts. It has its own runtime, so Hermit's overlay and key-2 settings are not added: the port has its own. Needs Homebrew's `python@3.14`, `opus` and `libvpx`.
 
 ## Build
 
