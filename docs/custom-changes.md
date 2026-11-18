@@ -340,8 +340,10 @@ DM_FOCUS_KEEP=1
 
 ### 重新构建后要保留
 
-`env.txt` 在 Application Support，不在 App 包里；重新构建、重新安装都不会被删。
-如果换游戏或删除存档目录，需要重新写这份 env.txt。
+旧构建把 `env.txt` 放在 Application Support，不在 App 包里。当前 No Lag Kart
+已经从 2026-11-18 起通过 `games/mario-kart-world/game.json` 的
+`switches` 把 `DM_FOCUS_KEEP=1` 直接烘进 App，所以全新安装不再需要手动
+创建这份 Application Support 文件。旧安装仍可继续使用原 `env.txt`。
 
 
 ### 2026-11-11 重新构建（nxnative 3304d6a0d7ed）
@@ -585,4 +587,29 @@ DM_FOCUS_KEEP=1
   马车下次重编已有 shader 缓存，构建前若仍报
   “first build needs 50 GB”，可在确认缓存和磁盘余量后使用
   `S2M_SKIP_DISK_CHECK=1`。
+
+#### 2026-11-18：MacBook Air M4 24 GB 专用包
+
+- 目标机为另一台 MacBook Air M4 24 GB，全新安装、不迁移存档；用于网盘传输
+  和长期使用。
+- 当前构建机的 GPU 是 `applegpu_g15s`（M3 Max）；M4 MacBook Air 的目标
+  GPU 架构是 `applegpu_g16g`。使用 `metal-tt -arch applegpu_g16g` 交叉生成
+  独立离线 archive，而不是携带本机的 `g15s` archive。
+- 构建仍使用 Mario Kart World 1.8.0 的 `no-lag-kart 033cbe594bf8`。
+  Shader 为 11,601 个，全部复用成功；`applegpu_g16g` archive 为 501.4 MB，
+  9,591 个 base、728 个 compute pipeline，94 个批次约 150 秒合并完成。
+- 默认游戏语言设为简体中文（`DMLanguage=zh-Hans`、`DM_LANG` 默认
+  `zh-Hans`）；启动页和 2 键设置项沿用现有中文补丁。
+- `DM_FOCUS_KEEP=1` 已写入 App 内的 `Contents/Resources/dm/env.txt`，解决
+  全新安装没有 Application Support `env.txt` 时的启动焦点崩溃；同时写入
+  `game.json` 的 No Lag Kart `switches`，以后自动构建也会带上。
+- 产物为 `work/Mario Kart World M4 Air.app`，23.3 GB，版本 1.8.0，
+  Bundle ID `org.nxnative.0400c3f00006e000`，ad-hoc 签名验证通过，
+  CDHash `f8acc57affbec9c1a2c25dffd60cebf6debb84cc`。
+- App 内只携带 `Contents/Resources/pso/applegpu_g16g.mtl4a`，不携带
+  M3 Max 的 `g15s` archive。
+- 网盘传输包：`work/Mario Kart World M4 Air.zip`，23,833,382,367 bytes。
+  ZIP 完整测试通过，SHA-256：
+  `ea219029e84f369e760aa6ac8d18d5d60802a4220fc2401de06439b61c1381f1`。
+  不包含存档；新机解压后放入 `/Applications` 即可。
 

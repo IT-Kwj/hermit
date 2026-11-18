@@ -63,6 +63,9 @@
    "versions": [
     "v917504"
    ],
+   "switches": [
+    "DM_FOCUS_KEEP=1"
+   ],
    "watch": [
     ""
    ],
