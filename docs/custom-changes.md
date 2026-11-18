@@ -618,3 +618,20 @@ DM_FOCUS_KEEP=1
   合并后解压。
 - 分卷不包含存档；新机解压后把 App 放入 `/Applications` 即可。
 
+#### 2026-11-18：清理可重建缓存
+
+- 已删除 `work/0400C3F00006E000/shader`（3.4 GB）、
+  `work/0400C3F00006E000/pso`（1.7 GB）、
+  `work/0400C3F00006E000/logs`（33 MB）、
+  `engines/nxnative-033cbe594bf8`（825 MB）、
+  `builds/mkw/run/pso_archive`（807 MB）、
+  `work/pso-archives/m3max-g15s-20261118`（502 MB）、
+  `builds/mkw/logs`（9.3 MB）和 `~/Library/Logs/nxnative`（5.6 MB）。
+- 实际释放约 6.7 GiB，磁盘可用从约 40 GiB 增加到约 46 GiB。
+- 保留 `work/0400C3F00006E000/extract`：约 22 GB，但 RomFS 与已安装 App
+  使用 APFS 克隆共享空间，单独保留 App 时删除它不能释放同等容量。
+- 保留 `/Applications/Mario Kart World.app`、Application Support 的
+  `save` / `save.work` / `env.txt`、`builds/mkw/run/save` /
+  `save.work`。下次重新构建会重新下载 No Lag Kart 引擎并重建 shader/pipeline
+  缓存，但当前已安装游戏不受影响。
+
