@@ -659,3 +659,16 @@ DM_FOCUS_KEEP=1
 - 分卷不包含存档；M6 新机解压后把 App 放入 `/Applications`。目标是
   macOS 26.6 或更高。
 
+#### 2026-11-18：清理 M6 专用产物
+
+- 网盘上传完成后，删除 `work/Mario Kart World Mac mini M6 upload/`
+  （约 22.2 GiB）、`work/Mario Kart World Mac mini M6.app`（逻辑约
+  23.3 GiB，但 RomFS/pso 与构建缓存共享物理空间）、
+  `work/0400C3F00006E000/pso`（约 1.1 GB）和两份构建/运行日志
+  （约 34 MB）。
+- 实际释放约 24.1 GiB，磁盘可用从约 42.7 GiB 增加到约 66.9 GiB。
+- 保留当前 `/Applications/Mario Kart World.app`、Application Support
+  的 `save` / `save.work` / `env.txt` / 当前 `pso_archive`，以及用于下次
+  快速构建的 `work/0400C3F00006E000/extract`、`shader` 和
+  `engines/nxnative-033cbe594bf8`。
+
