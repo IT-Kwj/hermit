@@ -672,3 +672,22 @@ DM_FOCUS_KEEP=1
   快速构建的 `work/0400C3F00006E000/extract`、`shader` 和
   `engines/nxnative-033cbe594bf8`。
 
+#### 2026-11-18：Apple Silicon 16 GB+ 多 GPU 通用包
+
+- 仍使用 Mario Kart World 1.8.0 的 `no-lag-kart 033cbe594bf8`，在同一个
+  arm64 App 内预编译 11 份 GPU archive：
+  `applegpu_g13d`、`g13g`、`g13s`、`g14g`、`g14s`、`g15g`、`g15s`、
+  `g16g`、`g16s`、`g17g`、`g18g`。
+- 每份 archive 约 474–510 MB；9,591 个 base、728 个 compute pipeline。
+  11 份全部成功，没有无效目标。App 内 `pso/archive.tsv` 记录了全部架构。
+- 目标范围是 Apple Silicon `arm64`、macOS 26.6+、16 GB 或更多内存；
+  Intel Mac 不支持。不在预编译列表中的 GPU 会回退到首次启动自行构建。
+- 默认简体中文，`DM_FOCUS_KEEP=1` 已写入 App 的 `dm/env.txt`，不包含存档。
+- 产物为 `work/Mario Kart World Universal 16GB+.app`，28.0 GB；
+  ad-hoc 深度签名验证通过，CDHash
+  `deca91a1db2f758bc0e459aa40c376ebe0414aff`。
+- 3 GiB 多卷上传包位于
+  `work/Mario Kart World Universal 16GB+ upload/`：`.z01` 到 `.z08`
+  加最后 `.zip`，总占用约 24 GB。`Mario Kart World Universal 16GB+.sha256`
+  已逐卷校验通过，SPLIT-README 记录 Keka 和命令行解压方式。
+
