@@ -635,3 +635,27 @@ DM_FOCUS_KEEP=1
   `save.work`。下次重新构建会重新下载 No Lag Kart 引擎并重建 shader/pipeline
   缓存，但当前已安装游戏不受影响。
 
+#### 2026-11-18：Mac mini M6 16 GB 专用包
+
+- 目标机为 Mac mini M6、16 GB、256 GB，全新安装、不迁移存档，用于网盘传输。
+- 仍采用当前 1.8.0 的首选 `no-lag-kart 033cbe594bf8`；M6 系列已有
+  16 GB 的实机记录，低内存 `mkw-neo` 更偏向 8 GB/Air，峰值性能较低。
+- 目标 GPU 架构为 `applegpu_g18g`。在 M3 Max 的 `applegpu_g15s` 上用
+  `metal-tt -arch applegpu_g18g` 交叉生成独立 archive。
+- 由于 shader 缓存已在上一次清理中删除，本次全部重编：11,601/11,601
+  个 shader 成功，约 10 分 28 秒；`applegpu_g18g` archive 493.3 MB，
+  9,591 个 base、728 个 compute pipeline。整个构建约 21 分钟。
+- 默认游戏语言为简体中文（`DMLanguage=zh-Hans`），App 内
+  `Contents/Resources/dm/env.txt` 包含 `DM_FOCUS_KEEP=1`。
+- 产物为 `work/Mario Kart World Mac mini M6.app`，23.3 GB，版本 1.8.0，
+  ad-hoc 深度签名验证通过，CDHash
+  `3e80ef217578449289077469f4e49bfa676396db`；App 内只包含
+  `Contents/Resources/pso/applegpu_g18g.mtl4a`。
+- 上传包位于 `work/Mario Kart World Mac mini M6 upload/`：`.z01` 到
+  `.z07` 加最后 `.zip`，每个大卷 3 GiB，总占用约 22 GB。
+  `Mario Kart World Mac mini M6.sha256` 已逐卷校验通过；
+  `Mario Kart World Mac mini M6 SPLIT-README.txt` 记录 Keka 解压和命令行
+  合并步骤。
+- 分卷不包含存档；M6 新机解压后把 App 放入 `/Applications`。目标是
+  macOS 26.6 或更高。
+
