@@ -1,12 +1,12 @@
 # Fast Fusion
 
-Title ID `040041E0212AE000`, update v262144. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/1db4bcb28b594804676d79c167472e7bbb9a260f/dm/games/040041E0212AE000) for how far it plays and on which Mac.
+Title ID `040041E0212AE000`, update v262144. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/c22f30a3f9541c48260261989b77a04cf4eefb8f/dm/games/040041E0212AE000) for how far it plays and on which Mac.
 
 Built with nxnative's own builder at the commit `game.json` names (fetched once into `./engines`), with Hermit's front end added (`tools/engine/patch.py`): the game starts at once, **key 1** is the performance overlay and **key 2** the settings.
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/040041E0212AE000`](https://github.com/seedds/nxnative/tree/1db4bcb28b594804676d79c167472e7bbb9a260f/dm/games/040041E0212AE000) |
+| Profile and notes | [nxnative `dm/games/040041E0212AE000`](https://github.com/seedds/nxnative/tree/c22f30a3f9541c48260261989b77a04cf4eefb8f/dm/games/040041E0212AE000) |
 | Dump folder | `base/` and `updates/262144/` |
 
 ## Shared shader list

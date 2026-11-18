@@ -1,0 +1,27 @@
+{
+ "title_id": "0100A8E016236000",
+ "name": "Kirby's Dream Buffet",
+ "version": "1.0.0",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v0"
+   ],
+   "version_names": {
+    "v0": "1.0.0"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "2925d7afec6f5ada83a00525c1b2203a0bf3522a"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.0) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

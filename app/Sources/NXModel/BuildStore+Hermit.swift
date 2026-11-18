@@ -272,13 +272,7 @@ extension BuildStore {
                 DispatchQueue.global(qos: .userInitiated).async {
                     let r = runner.capture(ProcessLaunch(executable: py, arguments: installArgs, environment: env, directory: self.repo.path))
                     hop {
-                        self.running = false
-                        self.append(r.out + r.err)
-                        let app = BuildStore.installedApp(r.out) ?? (lib + "/" + info.name + ".app")
-                        let made = r.status == 0 && FileManager.default.fileExists(atPath: app)
-                        self.macAppPath = made ? app : ""
-                        self.done = made
-                        self.doneNote = self.t(made ? (quick ? "msg.macAppDoneQuick" : "msg.macAppDone") : "msg.macAppMissing")
+                        self.finishHermitInstall(status: r.status, out: r.out, err: r.err, libraryDir: lib, fallbackName: info.name, quick: quick)
                     }
                 }
             }
@@ -293,6 +287,27 @@ extension BuildStore {
 }
 
 extension BuildStore {
+    /// Applies the result of `hermit.py install --to`: records the installed `.app` path on success, or surfaces install errors instead of claiming no `.app` was built.
+    package func finishHermitInstall(status: Int32, out: String, err: String, libraryDir: String, fallbackName: String, quick: Bool) {
+        running = false
+        let combined = [out, err].filter { !$0.isEmpty }.joined(separator: out.hasSuffix("\n") ? "" : "\n")
+        if !combined.isEmpty { append(combined.hasSuffix("\n") ? combined : combined + "\n") }
+        guard status == 0 else {
+            macAppPath = ""
+            done = false
+            doneNote = BuildProgress.lastMeaningfulLine(combined)
+                .map { String(format: t("msg.installFailedReason"), $0) }
+                ?? String(format: t("msg.installFailed"), status)
+            noteFailure()
+            return
+        }
+        let app = BuildStore.installedApp(out) ?? (libraryDir + "/" + fallbackName + ".app")
+        let made = FileManager.default.fileExists(atPath: app)
+        macAppPath = made ? app : ""
+        done = made
+        doneNote = t(made ? (quick ? "msg.macAppDoneQuick" : "msg.macAppDone") : "msg.macAppMissing")
+    }
+
     /// Where `hermit.py install` put the app (its "installed: <path>" line): the file name is the game's name with ":" as " -",
     /// since Finder shows a ":" in a file name as "/". Nil when the line is missing (older hermit.py: the app is then `<name>.app`).
     package static func installedApp(_ out: String) -> String? {

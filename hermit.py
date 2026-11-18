@@ -43,8 +43,10 @@ def unknown_game(tid):   # a game Hermit has no folder for: it can still be trie
 
 
 def file_game_name(tid):   # an unlisted Switch game's name from its own file name, tags and version left out ("Red Dead Redemption v0 (01007820196A6000).nsp" → "Red Dead Redemption"); '' without one
-    for p in DUMP_S1:
-        if any(int(t, 16) & ~0x1FFF == int(tid, 16) for t in s1_ids(p)):
+    base_id = int(tid, 16)
+    files = sorted(DUMP_S1, key=lambda p: base_id not in {int(t, 16) for t in s1_ids(p)})   # prefer the base file's name over update / DLC files
+    for p in files:
+        if any(int(t, 16) & ~0x1FFF == base_id for t in s1_ids(p)):
             n = re.sub(r'\s+', ' ', re.sub(r'\[[^\]]*\]|\([^)]*\)|\bv\d+(\.\d+)*\b', ' ', p.stem)).strip(' -_.')
             if n: return n
     return ''
@@ -237,16 +239,35 @@ def reports(g):   # how the game ran on players' Macs (games/<game>/reports.tsv)
     return [dict(zip(keys, l.split('\t'))) for l in (f.read_text().splitlines() if f.exists() else []) if l.strip() and not l.startswith('#')]
 
 
-def built_game(w):   # the game a finished build in w is, as the build it was made with (title.txt, build.txt)
+def built_game(w):   # the game a finished build in w is, as the build it was made with (title.txt, build.txt, engine.json)
     tf = w / 'title.txt'
     if not tf.exists(): sys.exit('no finished build in ' + str(w) + ': run build first')
     tid = tf.read_text().strip(); bf = w / 'build.txt'
     if tid not in GAMES: GAMES[tid] = unknown_game(tid)
-    GAMES[tid] = with_build(GAMES[tid], bf.read_text().strip() if bf.exists() else builds(GAMES[tid])[0]['id'])
+    avail = builds(GAMES[tid]) + untested_builds(GAMES[tid])
+    bid = bf.read_text().strip() if bf.exists() else (avail[0]['id'] if avail else '')
+    ef = w / 'engine.json'
+    if not any(b['id'] == bid for b in avail) and ef.is_file():
+        eng = json.loads(ef.read_text())
+        GAMES[tid] = dict(GAMES[tid], engine=eng, build={'id': bid or eng.get('kind', ''), 'name': KINDS.get(eng.get('kind', ''), bid), 'engine': eng, 'untested': True})
+    else:
+        GAMES[tid] = with_build(GAMES[tid], bid)
     global PROFILE
     guessed = w / 'guessed' / tid
     PROFILE = guessed if GAMES[tid]['build'].get('untested') and (guessed / 'game.tsv').is_file() else None
     return tid
+
+
+def built_app(w, g):   # the .app build wrote into w (app.txt, else app_file, else the one .app in w)
+    af = w / 'app.txt'
+    if af.is_file():
+        name = af.read_text().strip()
+        if name and (w / name).is_dir(): return w / name
+    p = w / app_file(g)
+    if p.is_dir(): return p
+    found = [d for d in sorted(w.glob('*.app')) if (d / 'Contents/Info.plist').is_file()]
+    if len(found) == 1: return found[0]
+    sys.exit(f'no finished .app in {w}: run build first')
 
 
 class Progress:
@@ -911,8 +932,8 @@ def mng_label(d):   # the grey build line of MacNativeGames' overlay says "MacNa
         if MNG_LABEL[0] in t: f.write_text(t.replace(MNG_LABEL[0], MNG_LABEL[1]), encoding='utf-8')
 
 
-def app_file(g):   # the built app's file name: the game's name, with ": " as " - " (Finder shows a ":" in a file name as "/")
-    return g['name'].replace(':', ' -') + '.app'
+def app_file(g):   # the built app's file name: the game's name, with ":" and "/" as " - " (Finder shows a ":" in a file name as "/")
+    return (re.sub(r'\s*[:/]\s*', ' - ', g['name']).strip(' .-') or g.get('title_id') or 'Hermit') + '.app'
 
 
 def mng_fixes(app, fixes, sign=True):   # game.json build "fixes": small code fixes Hermit adds to a MacNativeGames app after its builder, until MacNativeGames has them
@@ -989,7 +1010,12 @@ def engine_build(a, tid, w, e):   # a game on another engine: its own builder do
             dump = w / 'switch-files' / tid
             if dump.exists(): shutil.rmtree(dump)
             dump.mkdir(parents=True)
-            for f in [base] + ([upd] if upd else []) + dlc: (dump / f.name).symlink_to(f)
+            seen_names = set()
+            for f in [base] + ([upd] if upd else []) + dlc:
+                name = f.with_suffix(f.suffix.lower()).name if f.suffix else f.name   # nxnative's glob looks for lowercase extensions
+                while name in seen_names: name = f'_{name}'
+                seen_names.add(name)
+                (dump / name).symlink_to(f)
             print(f'  base {base.name}' + (f', update {upd.name}' if upd else '') + (f', {len(dlc)} DLC' if dlc else ''))
             s1 = ['--title-id', tid]
         run([py(), nx / 'scripts/build_ipa_from_nsp.py', dump, '--platform', 'mac-app', '--allow-other-metal', '--env-file', sw,
@@ -1094,7 +1120,9 @@ def engine_build(a, tid, w, e):   # a game on another engine: its own builder do
         if app.exists(): shutil.rmtree(app)
         shutil.move(str(w / tid / 'out' / f'{g["name"]}.app'), app)
     else: sys.exit(f'{g["name"]}: engine kind {eng["kind"]!r} is not one Hermit builds with')
+    if not app.is_dir(): sys.exit(f'{g["name"]}: the build finished without creating {app.name}')
     (w / 'title.txt').write_text(tid + '\n'); (w / 'build.txt').write_text(g['build']['id'] + '\n')
+    (w / 'app.txt').write_text(app.name + '\n'); (w / 'engine.json').write_text(json.dumps(g['engine']) + '\n')
     P.end(summary=str(app))
     print(f'\nbuilt: {app}\n./hermit.py install moves it to /Applications.')
 
@@ -1217,6 +1245,7 @@ def host_and_app(a, tid, w, lib, e):
          '--msl', lib, '--tables', prof, '--font', font, '--env-file', envf, '--settings', w / 'build/launcher.json', '--launcher-window', 'off',
          '--title-id', tid, '--name', g['name'], '--version', g['version'] or 'untested', '--lang', 'en-US'] + (['--marker', marker] if marker else []), env=e)
     (w / 'title.txt').write_text(tid); (w / 'build.txt').write_text(g['build']['id'] + '\n')
+    (w / 'app.txt').write_text(app.name + '\n'); (w / 'engine.json').write_text(json.dumps(g['engine']) + '\n')
     P.end(summary=str(app))
     print(f'\ndone: {app}\nnext: ./hermit.py install')
 
@@ -1414,14 +1443,18 @@ def switched_build(g):
 
 def install(a):
     w = paths(a)[0]; tid = built_game(w)
-    g = GAMES[tid]; app = w / app_file(g); dst = Path(a.to).expanduser() / app.name
+    g = GAMES[tid]; app = built_app(w, g); dst = Path(a.to).expanduser() / app.name
     if subprocess.run(['pgrep', '-f', f'{dst}/Contents/MacOS'], capture_output=True).returncode == 0: sys.exit(f'{g["name"]} is running: quit it first')
-    if dst.exists(): shutil.rmtree(dst)
-    old = dst.with_name(f'{g["name"]}.app')   # the same game installed under its name from before app_file (":" in it): replaced, not kept twice
-    if old != dst and old.is_dir() and (old / 'Contents/Info.plist').exists():
-        if subprocess.run(['pgrep', '-f', f'{old}/Contents/MacOS'], capture_output=True).returncode == 0: sys.exit(f'{g["name"]} is running: quit it first')
-        shutil.rmtree(old)
-    shutil.move(str(app), dst); Path(str(app) + '.key').unlink(missing_ok=True)
+    try:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if dst.exists(): shutil.rmtree(dst)
+        old = dst.with_name(f'{g["name"]}.app') if '/' not in g['name'] else None   # the same game installed under its name from before app_file (":" in it): replaced, not kept twice
+        if old and old != dst and old.is_dir() and (old / 'Contents/Info.plist').exists():
+            if subprocess.run(['pgrep', '-f', f'{old}/Contents/MacOS'], capture_output=True).returncode == 0: sys.exit(f'{g["name"]} is running: quit it first')
+            shutil.rmtree(old)
+        shutil.move(str(app), dst); Path(str(app) + '.key').unlink(missing_ok=True)
+    except OSError as x:
+        sys.exit(f'could not install {app.name} into {dst.parent}: {x.strerror or x}')
     switched_build(g); trim_build(w, tid, g)
     print(f'installed: {dst}\nThe first start after each install waits 1-3 minutes while macOS scans the app (no window, no Dock icon yet): wait, do not open it twice.')
 

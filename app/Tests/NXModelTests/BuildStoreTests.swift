@@ -492,4 +492,24 @@ import XCTest
         XCTAssertEqual(BuildStore.installedApp(out), "/Applications/The Legend of Zelda - Tears of the Kingdom.app")
         XCTAssertNil(BuildStore.installedApp("no such line\n"), "an older switch2mac.py: the app falls back to <name>.app")
     }
+
+    func testFinishHermitInstallReportsInstallErrorInsteadOfMissingApp() throws {
+        let store = makeStore()
+        store.running = true
+        store.finishHermitInstall(status: 1, out: "", err: "could not install Game.app into /Applications: Permission denied\n",
+                                  libraryDir: "/Applications", fallbackName: "Game", quick: false)
+        XCTAssertFalse(store.running)
+        XCTAssertFalse(store.done)
+        XCTAssertEqual(store.macAppPath, "")
+        XCTAssertEqual(store.doneNote, String(format: store.t("msg.installFailedReason"), "could not install Game.app into /Applications: Permission denied"))
+
+        let lib = temporary.appendingPathComponent("Apps")
+        let app = lib.appendingPathComponent("My Game.app")
+        try FileManager.default.createDirectory(at: app, withIntermediateDirectories: true)
+        store.finishHermitInstall(status: 0, out: "installed: \(app.path)\n", err: "",
+                                  libraryDir: lib.path, fallbackName: "Fallback", quick: false)
+        XCTAssertTrue(store.done)
+        XCTAssertEqual(store.macAppPath, app.path)
+        XCTAssertEqual(store.doneNote, store.t("msg.macAppDone"))
+    }
 }

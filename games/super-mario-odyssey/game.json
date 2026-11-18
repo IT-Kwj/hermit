@@ -14,7 +14,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "a2514d7def4e35f3c47f8792af9e6ad31c90ace9"
+    "commit": "82c354b0dec64d2632134c721e005f39d0df72e5"
    },
    "shader_list": "shader_list.tsv",
    "about": "nxnative's profile (1.4.1) with Hermit's overlay and key-2 settings: see its notes for how far it plays.",
@@ -28,7 +28,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "afa6b2da436b0a3704155ecc871ac7394820a208",
+    "commit": "37b8ba94641b3ee79b65ac6508fe5501a6139274",
     "builder": {
      "script": "games/odyssey/scripts/build_odyssey.py",
      "cwd": "games/odyssey",
