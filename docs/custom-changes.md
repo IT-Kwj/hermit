@@ -608,8 +608,13 @@ DM_FOCUS_KEEP=1
   CDHash `f8acc57affbec9c1a2c25dffd60cebf6debb84cc`。
 - App 内只携带 `Contents/Resources/pso/applegpu_g16g.mtl4a`，不携带
   M3 Max 的 `g15s` archive。
-- 网盘传输包：`work/Mario Kart World M4 Air.zip`，23,833,382,367 bytes。
-  ZIP 完整测试通过，SHA-256：
-  `ea219029e84f369e760aa6ac8d18d5d60802a4220fc2401de06439b61c1381f1`。
-  不包含存档；新机解压后放入 `/Applications` 即可。
+- 网盘传输包改为 3 GiB 多卷 ZIP：
+  `work/Mario Kart World M4 Air.z01` 到 `.z07`，加上最后
+  `work/Mario Kart World M4 Air.zip`。8 个卷必须一起上传、保持文件名不变。
+- `work/Mario Kart World M4 Air.sha256` 记录每个分卷的 SHA-256；
+  `work/Mario Kart World M4 Air SPLIT-README.txt` 写有网盘上传、校验和
+  解压步骤。macOS 自带解压工具不识别这种多卷 ZIP，推荐用 Keka；也可用
+  `zip -s 0 "Mario Kart World M4 Air.zip" --out "Mario Kart World M4 Air-full.zip"`
+  合并后解压。
+- 分卷不包含存档；新机解压后把 App 放入 `/Applications` 即可。
 
