@@ -10,7 +10,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "48779087765fe0d4ce16a2ea1e6618381d4cb701",
+    "commit": "b560cf2ff97735b48a5be2b4953312263e88c657",
     "builder": {
      "script": "games/ot0/scripts/build_ot0.py",
      "args": [

@@ -2,7 +2,7 @@
 
 Title ID `010093801237C000`. A **Switch** game: built from your own copy's `.xci` / `.nsp` files with your own `prod.keys` (see [LEGAL.md](../../LEGAL.md)). Version 1.0.0.
 
-Built with [MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT): its [`games/dread`](https://github.com/ly05010419/MacNativeGames/tree/48779087765fe0d4ce16a2ea1e6618381d4cb701/games/dread) port, at the commit `game.json` names, run through that port's own builder as its README describes. Community port, early. Base game 1.0.0 (.xci or .nsp); updates are not supported yet. It has its own runtime, so Hermit's overlay and key-2 settings are not added: the port has its own. Needs Homebrew's `python@3.14`, `opus` and `libvpx`.
+Built with [MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT): its [`games/dread`](https://github.com/ly05010419/MacNativeGames/tree/f60d8c270244b206000f3e140158166e9fda1022/games/dread) port, at the commit `game.json` names, run through that port's own builder as its README describes. Community port, early. Base game 1.0.0 (.xci or .nsp); updates are not supported yet. It has its own runtime, so Hermit's overlay and key-2 settings are not added: the port has its own. Needs Homebrew's `python@3.14`, `opus` and `libvpx`.
 
 ## Build
 
