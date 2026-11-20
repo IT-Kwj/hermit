@@ -704,3 +704,34 @@ DM_FOCUS_KEEP=1
   `pso_archive`，以及下次本机构建需要的 `extract`、`shader`、引擎源码、
   g15s archive 和 g15s 批次缓存。
 
+#### 2026-11-21：王国之泪特殊私密 UI 版（临时修改，已还原）
+
+- 目标是一次性特殊构建，不安装；修改之后需要还原。
+- 在 MacNativeGames 的 `games/totk/runtime/game_version.h` 设置临时宏
+  `TOTK_SPECIAL_PRIVATE_UI=1`。
+- 该宏关闭 1 键设置页面中的“访问主页”按钮、“着色器贡献”页、
+  “性能排行榜”页和“截图分享”页，并关闭游戏启动时的着色器共享询问。
+- 同时取消后台着色器贡献、排行榜和截图分享上传；普通本地截图仍保留。
+- 修改涉及：
+  `games/totk/runtime/game_version.h`、
+  `games/totk/runtime/settings_game.h`、
+  `shared/runtime/settings_panel.h`、
+  `games/totk/app/launcher.m`、
+  `games/totk/runtime/frontend.m`。
+- 反向补丁保存在 `work/totk-special-private-ui.patch`，SHA-256：
+  `5514462536355b080f2181bd8c240860c787057771b634a205dc544a4bbc7a55`。
+- 构建产物为
+  `work/The Legend of Zelda - Tears of the Kingdom Special.app`；
+  分卷上传包位于
+  `Downloads/WGZL/The Legend of Zelda - Tears of the Kingdom 1.4.3 Special App upload/`。
+- 低配特殊版另关闭原生 4K/5K，产物为
+  `work/The Legend of Zelda - Tears of the Kingdom Special 16GB.app`；
+  分卷上传包位于
+  `Downloads/WGZL/The Legend of Zelda - Tears of the Kingdom 1.4.3 Special 16GB App upload/`。
+- 两个特殊版 App 工作副本已删除；两个分包上传目录保留。
+- 已用 `git apply -R work/totk-special-private-ui.patch` 还原五个源文件，
+  当前 MacNativeGames 的特殊版源码修改已全部撤销。
+- 补丁保留下来供以后制作同类特殊版使用。以后构建这种特殊版时沿用本流程：
+  临时应用补丁、按普通或低配规格构建、分包且不安装、删除工作目录中的 App
+  副本、反向应用补丁恢复源码；分包上传目录始终保留。
+
