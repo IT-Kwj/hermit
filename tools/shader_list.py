@@ -201,7 +201,9 @@ def main():
             texts = posts + [fetch(u) for u in dict.fromkeys(u for t in posts for u in ATTACH.findall(t))]
             blob = '\n'.join(texts); h = header(blob)
             tid = h[0] if h else next((t for t in gs if t in blob.upper()), None) or next((g['title_id'] for n, g in byname.items() if n in (i['title'] or '').lower()), None)
-            if tid not in gs: print(f'#{i["number"]}: no game this repository has (left open)'); out(i, False, problem='It names no game Hermit has.'); continue
+            if tid not in gs:
+                why = 'It is from an untested build, which does not have a shared shader list yet.' if h and h[1].endswith('-untested') else 'It names no game Hermit has.'
+                print(f'#{i["number"]}: no game this repository has (left open)'); out(i, False, problem=why); continue
             kind = lambda e: e.rsplit('-', 1)[0] if e != 'switch2mac' else e
             g = next((x for x in gs[tid] if h and x['engine_id'] == h[1]), None) or next((x for x in gs[tid] if h and kind(x['engine_id']) == kind(h[1])), gs[tid][0])   # the build whose engine the file names, else one of its kind (none: the first, and check refuses it)
             got, bad, unknown = check(g, blob, drop)

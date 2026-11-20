@@ -1,0 +1,11 @@
+{
+ "title_id": "040015100B514001",
+ "name": "Super Mario Bros. Wonder – Nintendo Switch 2 Edition + Meetup in Bellabel Park",
+ "version": "base game",
+ "engine": {
+  "kind": "nxnative",
+  "repo": "https://github.com/seedds/nxnative",
+  "commit": "f35ebba74c8267f54b22a8b4c438047eb77ed1ae"
+ },
+ "disk_gb": 50
+}

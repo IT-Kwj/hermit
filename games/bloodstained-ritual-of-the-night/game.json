@@ -1,0 +1,27 @@
+{
+ "title_id": "0100BF500207C000",
+ "name": "Bloodstained: Ritual of the Night",
+ "version": "1.60",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v851968"
+   ],
+   "version_names": {
+    "v851968": "1.60"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "950212b9fc9033bb212141c7334c611b48d00e7b"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.60) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

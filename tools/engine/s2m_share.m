@@ -42,7 +42,7 @@ static void share_at_close(void) {
     NSString *head = [NSString stringWithFormat:@"# switch2mac shader list contribution\tgame=%@\tengine=%@\n# %@: shaders and pipelines this Mac built that the app's shared list lacks. Identifiers only, no game data.\n", tid, engine, game];
     write_rows(contrib, head, rows);
     LOG("front end: shader list contribution: %lu rows (%s)", (unsigned long)rows.count, contrib.fileSystemRepresentation);
-    const char *off = getenv("S2M_SHARE"); if (off && !strcmp(off, "0")) return;
+    const char *off = getenv("S2M_SHARE"); if ((off && !strcmp(off, "0")) || [engine hasSuffix:@"-untested"]) return;
     NSString *bid = NSBundle.mainBundle.bundleIdentifier ?: @""; if (![bid hasPrefix:@"org.nxnative."]) return;   // asked from the app only, not from a build folder run
     NSUserDefaults *u = NSUserDefaults.standardUserDefaults; if ([u boolForKey:@"s2m.share.never"]) return;
     const char *ev = getenv("S2M_SHARE_EVERY"); NSInteger every = ev && atoi(ev) > 0 ? atoi(ev) : 100, next = [u integerForKey:@"s2m.share.next"]; if (next <= 0) next = every;

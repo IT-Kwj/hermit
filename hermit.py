@@ -893,9 +893,10 @@ def launcher_source():   # the window's source with Manrope written into its emp
     return src.encode()
 
 
-def app_switches(g):   # an untested build says so in the overlay (S2M_ENGINE=<kind>-untested); a build's own "switches" in game.json follow (a port's recommended settings)
+def app_switches(g):   # an untested build says so in the overlay (S2M_ENGINE=<kind>-untested) and skips shader-list prompts; a build's own "switches" in game.json follow
     b = g.get('build', {}); label = b.get('name', '') if not b.get('untested') else ''
     return '\n'.join([f'S2M_ENGINE={g["engine"]["kind"]}-' + ('untested' if b.get('untested') else g["engine"]["commit"][:12])]
+                     + (['S2M_SHARE=0'] if b.get('untested') else [])
                      + ([f'S2M_BUILD={label}'] if re.fullmatch(r"[\w' .()-]{1,40}", label or '') else []) + b.get('switches', []))   # S2M_BUILD: the build's name for the overlay ("azmasm's build"); S2M_ENGINE stays <kind>-<commit> (the app matches builds by it)
 
 
@@ -1234,7 +1235,7 @@ def host_and_app(a, tid, w, lib, e):
     P.stage('app')
     if PROFILE:   # an untested build: the generic settings, its own switches, the marker from the borrowed profile
         run([py(), ROOT / 'tools/engine/launcher_generic.py', NX, w / 'build/patched', w / 'build/launcher.json', tid], env=e)
-        envf = w / 'build/env_untested.txt'; envf.write_text(f'S2M_ENGINE=switch2mac-untested\n')
+        envf = w / 'build/env_untested.txt'; envf.write_text('S2M_ENGINE=switch2mac-untested\nS2M_SHARE=0\n')
         marker = next((l.split()[1] for l in (prof / 'game.tsv').read_text().splitlines() if l.startswith('romfs_marker')), '')
     else:
         run([py(), g['dir'] / 'launcher.py', NX, w / 'build/patched', w / 'build/launcher.json'], env=e)

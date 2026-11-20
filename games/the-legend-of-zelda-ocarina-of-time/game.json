@@ -30,7 +30,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "93c76c1cbf4121f2609f24eaa0d2cafec9bb04c7"
+    "commit": "31fdefeb4e9169e4ca904a4625f94d3c38c328a4"
    },
    "shader_list": "shader_list.tsv",
    "about": "Upstream nxnative with Hermit's overlay and key-2 settings: nxnative's own Ocarina of Time profile, kept up to date with its main branch.",
@@ -44,7 +44,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/cheemu21/kid-with-sword-remake",
-    "commit": "6913cb249bfb2fd65cbc9fecb43a1dda54c7124d"
+    "commit": "856be07e45a49ef70c38b9d32a7d8ab81f9b5975"
    },
    "shader_list": "shader_list-kid-with-sword.tsv",
    "watch": [

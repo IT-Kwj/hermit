@@ -10,7 +10,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "fab0882076039478b07a160abae1c91cc1e367bd",
+    "commit": "d1dfc219914f52770e07d76acdf20a5594ec30de",
     "builder": {
      "script": "games/dread/build.py",
      "args": [

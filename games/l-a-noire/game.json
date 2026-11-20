@@ -1,0 +1,27 @@
+{
+ "title_id": "0100830004FB6000",
+ "name": "L.A. Noire",
+ "version": "1.2",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v131072"
+   ],
+   "version_names": {
+    "v131072": "1.2"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "130ef2936771cbeb411d3ea09b418549fba25878"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.2) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

@@ -1,0 +1,27 @@
+{
+ "title_id": "010026300BA4A000",
+ "name": "Slay the Spire",
+ "version": "1.0",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v0"
+   ],
+   "version_names": {
+    "v0": "1.0"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "a6aaf66d9163bc2751f6fa9383384adccf29d228"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

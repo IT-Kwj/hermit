@@ -1,0 +1,27 @@
+{
+ "title_id": "010057A01E4D4000",
+ "name": "TSUKIHIME A piece of blue glass moon",
+ "version": "1.0.2",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v131072"
+   ],
+   "version_names": {
+    "v131072": "1.0.2"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "0ec204f512aceb385dec6eef5bb676a000c13aa3"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.2) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

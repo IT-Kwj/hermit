@@ -1,0 +1,27 @@
+{
+ "title_id": "0100D800117F4000",
+ "name": "Re:ZERO -Starting Life in Another World- The Prophecy of the Throne",
+ "version": "1.0.2",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v131072"
+   ],
+   "version_names": {
+    "v131072": "1.0.2"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "14f54e4c18e2a97905c3481e5e5c4d7764c272f2"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.2) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
