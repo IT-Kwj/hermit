@@ -331,6 +331,12 @@ private struct CloudSavesCard: View {
     }
 }
 
+// Newer nxnative launcher homes use this name, but their iOS Launcher.swift (which defines it) is not
+// part of the Mac build. Route the name to the Mac card above so LauncherHome compiles unchanged.
+struct CloudSavesSection: View {
+    var body: some View { CloudSavesCard() }
+}
+
 private final class Launcher: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let model: LauncherModel
     var window: NSWindow?
