@@ -735,3 +735,247 @@ DM_FOCUS_KEEP=1
   临时应用补丁、按普通或低配规格构建、分包且不安装、删除工作目录中的 App
   副本、反向应用补丁恢复源码；分包上传目录始终保留。
 
+#### 2026-11-21：王国之泪 1.4.3 一键金手指页
+
+- 1 键设置面板新增“金手指”页，支持游戏运行中开关，设置保存在
+  `totk-cheats-v143.txt`，重启后自动恢复。
+- 恢复点在外层仓库和 MacNativeGames 引擎仓库均为
+  `restore/totk-cheats-before-20261121-091525`。引擎恢复标签是一个 stash
+  commit，保留了当时已经存在的四个无关工作区修改；旧 App 另有 APFS 克隆：
+  `work/restorepoints/totk-cheats-20261121-091525/`。
+- 新增 `games/totk/runtime/cheats_v143.c` 和 `cheats_v143.h`。切换时先暂停
+  所有游戏线程，把目标代码页临时改为可写，写入一个对齐的 32 位字并刷新
+  指令缓存，然后恢复 RX 权限并恢复游戏线程，避免在代码仍被线程执行时留下
+  可写执行页。
+- 已接入这批 1.4.3 文件中可直接静态替换的项目：无限精力、电池、马匹耐力、
+  潜行、体温、瘴气、伙伴冷却、武器/弓箭充能、弓箭速射、伤害倍数、移动速度、
+  跳跃、默认奔跑、拾取数量、免费购物、无限弓箭/佐纳乌/食物、amiibo、
+  地图显示项目、装置上限、时间速度、雾和血月。
+- “拾取数量”在 `main+0xA77B40` 把原 `add w3,w6,w3` 改成固定值：
+  `52800C83` 为拾取后数量 100，`52807CE3` 为 999；下拉项互斥，避免同时
+  修改同一地址。按原金手指行为这是“把该堆叠设为 N”，不是在当前数量上再
+  加 N。旧保存值 `items=1` 继续表示 999，新的 `items=2` 表示 100，升级后
+  不会把原有 999 设置误改成 100。
+- 伤害倍数、移动速度和时间为互斥下拉选项；页面底部提供“全部关闭”。
+- `04`/`08` 直接写入码已转换并逐条核对当前 1.4.3 主程序：66 个写入字、
+  52 个唯一地址，原始指令 0 个不匹配。每项安装时还会再次校验，版本不匹配
+  的项会灰显或拒绝应用。
+- 暂不支持原文件里占用本项目保留跳转空隙的无限生命、无限装备耐久度、
+  无限食物增益计时器、任务计时器加 60 秒，以及月球跳跃指针链和按住按键
+  临时切换滑翔伞速度。它们需要独立重定位或持续执行的金手指 VM，本版没有
+  强行写入保留区。
+- 设置页改动涉及 `shared/runtime/settings_panel.h`、
+  `games/totk/runtime/settings_game.h`、`runtime.h`、
+  `game_patches_v143.c` 和 1.4.3 Makefile；测试覆盖中英文、开关、互斥选项、
+  全部关闭、滚动页面，以及原有 1.2.1/BotW 设置页编译。
+- 新 App 构建约 4 分钟，启动着色器 28,108 个全部复用，`applegpu_g15s`
+  pipeline 30,825 条成功；ad-hoc 深度签名校验通过，已安装到
+  `/Applications/The Legend of Zelda - Tears of the Kingdom.app`，约 20 GB。
+
+#### 2026-11-21：王国之泪 1.4.3 拾取 ×100 修正
+
+- 用户实测原“拾取数量 100”把 `main+0xA77B40` 的 `add w3,w6,w3` 直接改成
+  `mov w3,#100` 后，从背包放回地上的苹果仍只回到 1 个。静态对照 1.0.0
+  的 `main+0x2393714` 与 1.4.3 内联后的同名逻辑，确认该处确实是“现有数量
+  `w6` 加上本次增量 `w3`”；不再把 1.4.3 的增量直接替换成固定值。
+- 1.4.3 文本尾部原本空闲的 padding `+304..+320` 现在登记为
+  `PAD_V143_CHEAT`。A77B40 改为跳板：`拾取 ×100` 执行
+  `mov w7,#100; madd w3,w3,w7,w6`，即新数量为“当前数量 + 本次拾取数 ×100”；
+  “固定 999”保留原金手指行为，执行 `mov w3,#999`。关闭时跳板恢复为 NOP，
+  原 `add` 指令恢复。
+- `cheat_patch` 每次写入后增加逐字读回校验，并把最后状态写到
+  `~/Library/Application Support/MacNativeGames/TOTK/totk-cheats-v143-status.txt`。
+  设置本身仍保存在同目录的 `totk-cheats-v143.txt`。
+- 设置页名称改为“拾取倍率 / Pickup multiplier”，选项为“游戏原样 /
+  拾取 ×100 / 固定 999”，消除“数量 100”与“倍率 100”的歧义。
+- 使用真实 1.4.3 `main.patched.bin` 的集成探针通过：39/39 项可用；
+  开启 ×100、关闭还原、固定 999 三态的站点和三条跳板指令均逐字校验正确。
+  App 增量构建约 4 分钟，28,108 个启动着色器全部复用，30,825 条 pipeline
+  成功；深度签名校验通过并已安装到
+  `/Applications/The Legend of Zelda - Tears of the Kingdom.app`。安装没有
+  改动 `MacNativeGames/TOTK/profile` 下的存档。
+
+#### 2026-11-21：王国之泪特别版 + 金手指分卷包
+
+- 按之前的临时特殊版流程重新应用 `work/totk-special-private-ui.patch`：
+  移除“访问主页”、着色器贡献、性能排行榜、截图分享页面，关闭启动时的
+  着色器共享询问及对应后台上传；本地截图功能保留。
+- 这次特殊版必须在金手指功能之上叠加。旧补丁的
+  `shared/runtime/settings_panel.h` 片段与金手指页的页签和页脚改动重叠，
+  无法直接应用，所以四个独立文件照常用补丁应用，共享设置面板的手工移植
+  与旧补丁相同：给访问主页增加 `SETTINGS_HAS_HOME` 条件，并保留
+  `SETTINGS_HAS_CHEATS` 页。
+- 已构建普通特别版 + 金手指：
+  `work/The Legend of Zelda - Tears of the Kingdom Special Cheats.app`。
+  原生 4K、原生 5K 均开启；1.4.3，金手指页及“拾取 ×100”保留。
+  深度签名校验通过，启动着色器 28,108 个全部复用，`applegpu_g15s`
+  pipeline 30,825 条成功。
+- 低配特别版 + 金手指没有构建。普通 App 的 3 GiB 分卷完成后只剩约
+  9.3 GB，工作 App 删除后仍约 9.3 GB（打包资源使用 APFS 克隆）；低配
+  App 加第二套约 34 GB 分卷无法安全容纳，因此按用户“内存不足就先弄普通
+  特别版”的指示停止。
+- 分卷上传目录：
+  `Downloads/WGZL/The Legend of Zelda - Tears of the Kingdom 1.4.3 Special Cheats App upload/`。
+  `.z01` 到 `.z11` 加最后 `.zip` 共 12 个文件，约 34 GB；同目录的
+  `解压说明.txt` 用中文写明 Keka 和命令行合并方法，
+  `The Legend of Zelda - Tears of the Kingdom Special Cheats.sha256`
+  记录全部 12 个分卷的 SHA-256。
+- 分卷已按 `.z01` 到 `.z11`、`.zip` 的顺序拼接，使用 macOS `bsdtar`
+  完整流式解压到 `/dev/null` 校验通过。工作 App 副本已删除，上传目录保留；
+  当前 `/Applications/The Legend of Zelda - Tears of the Kingdom.app` 和
+  `MacNativeGames/TOTK/profile` 下的存档均未改动。
+- 特殊版临时源码修改已反向还原；当前工作区只保留正常版的金手指实现、
+  先前已有的四个 `frontend.m` 修改及测试/文档改动。
+- 2026-11-21 后续按用户要求重新生成工作副本供测试：
+  `work/The Legend of Zelda - Tears of the Kingdom Special Cheats.app`。
+  这次不安装、不再制作分卷。构建时磁盘只剩约 9 GB，构建器的保守空间检查
+  会拒绝已有的 APFS 克隆增量构建，因此临时加入
+  `MNG_SKIP_DISK_CHECK=1` 开关越过检查；构建成功后该开关已从
+  `build_app.py` 撤销。工作副本深度签名校验通过，四份特殊版源码修改也已
+  再次还原。
+
+#### 2026-11-21：王国之泪低配特别版 + 金手指分卷包
+
+- 磁盘扩容后补齐低配特殊版。再次临时应用
+  `work/totk-special-private-ui.patch`，共享设置面板因金手指页重叠，
+  继续按前述方式手工移植；正常金手指代码保持不变。
+- 构建参数为 1.4.3、`--no-native-4k --no-native-5k`，产物
+  `work/The Legend of Zelda - Tears of the Kingdom Special 16GB Cheats.app`。
+  特别版精简界面、完整金手指页和“拾取 ×100”均保留；原生 4K/5K 关闭。
+- 深度签名校验通过；启动着色器 28,108 个全部复用，`applegpu_g15s`
+  pipeline 30,825 条成功。App 不安装。
+- 3 GiB 分卷目录：
+  `Downloads/WGZL/The Legend of Zelda - Tears of the Kingdom 1.4.3 Special 16GB Cheats App upload/`。
+  `.z01` 到 `.z11` 加最后 `.zip` 共 12 个文件，约 34 GB；同目录
+  `解压说明.txt` 用中文写明 Keka／命令行合并步骤，
+  `The Legend of Zelda - Tears of the Kingdom Special 16GB Cheats.sha256`
+  记录 12 个文件的 SHA-256。
+- 已按分卷顺序拼接并用 macOS `bsdtar` 完整流式解压到 `/dev/null` 校验通过。
+  低配版工作 App 副本已删除；普通特别版工作 App
+  `work/The Legend of Zelda - Tears of the Kingdom Special Cheats.app` 保留。
+- 特殊版临时源码修改已反向还原。当前 `/Applications` 正常版和
+  `MacNativeGames/TOTK/profile` 下的存档均未改动。
+
+#### 2026-11-21：特别版分卷保留符号链接修正
+
+- 发现前两次特别版分卷使用了 `zip -s 3g -r`，漏掉旧的 `-y` 参数。
+  App 内有四个指向 Helpers bundle 的符号链接；不写 `-y` 时 ZIP 会跟随
+  链接并重复写入约 15.88 GiB 的 `romfs.bin`，以及着色器、pipeline 数据，
+  导致 12 个分卷、约 34 GB。金手指本身和低配显示设置只改变代码，不增加
+  这部分空间。
+- 已删除两套错误的 12 分卷目录，并用
+  `zip -s 3g -r -y` 重新制作普通特别版和低配特别版。两套现在均为
+  `.z01` 到 `.z05` 加最后 `.zip`，共 6 个文件、约 17 GB。
+- 普通特别版复用已构建的
+  `work/The Legend of Zelda - Tears of the Kingdom Special Cheats.app`；
+  低配版重新构建
+  `work/The Legend of Zelda - Tears of the Kingdom Special 16GB Cheats.app`，
+  原生 4K/5K 关闭。按用户要求，这两份工作 App 均保留供测试，不删除、不安装。
+- 两套分卷均按顺序拼接并用 macOS `bsdtar` 完整流式解压到 `/dev/null`
+  校验通过；两套 SHA-256 清单逐卷复核全部 OK，中文 `解压说明.txt` 也已
+  改为 6 个文件并注明必须保留符号链接。
+- 低配构建临时应用的特殊版补丁已再次反向还原；正常版金手指实现和已有
+  `frontend.m` 修改不变。
+
+#### 特殊版 `.app` 分卷打包固定规则
+
+- 以后所有 mac App 分卷继续使用 3 GiB：
+  `zip -s 3g -r -y "<name>.zip" "<name>.app"`。`-y` 是必需项，不能省略；
+  它让 ZIP 保存 App 内指向 Helpers bundle 的符号链接，而不是跟随链接把
+  RomFS、着色器和 pipeline 再打包一份。
+- 打包前先检查链接：
+  `find "<name>.app" -type l -print`。王国之泪 1.4.3 正常版应有
+  `shader-seed`、`pipelines`、`shader-libs` 和 `romfs.bin` 四个链接；
+  低配版结构相同。
+- 打包后检查分卷数量。王国之泪 1.4.3 普通特别版和低配特别版使用
+  `zip -y` 时应为 `.z01` 到 `.z05` 加最后 `.zip`，共 6 个文件、约 17 GB。
+  如果变成 `.z11`、约 34 GB，说明漏了 `-y`，不要上传；只删除这次错误
+  分卷，修正命令后重新制作。
+- 完成后必须按分卷顺序拼接并流式校验：
+  `cat *.z01 *.z02 *.z03 *.z04 *.z05 *.zip | bsdtar -xOf - > /dev/null`，
+  再生成并复核 `.sha256`。`.app` 本身保留时，用
+  `codesign --verify --deep --strict` 检查签名。
+- 上传目录的说明文件统一命名为 `解压说明.txt`，正文只用中文，不再使用
+  英文说明文件。内容必须同时包含：
+  1. macOS 终端里用 `zip -s 0` 合并分卷并按顺序解压的命令；
+  2. 第三方软件 Keka 的图形界面步骤，包括所有 `.z01` 到 `.zNN` 和最后的
+     `.zip` 必须放在同一目录、用 Keka 打开最后的 `.zip`、选择解压位置，
+     以及必须保留 App 内的符号链接；
+  3. 校验 `.sha256` 的方法和最终把 `.app` 放入 `/Applications` 的说明。
+
+#### 2026-11-21：王国之泪清理
+
+- 按用户确认的清单删除：
+  `work/restorepoints/totk-cheats-20261121-091525`、
+  `Library/Application Support/MacNativeGames/Builder/sources`、
+  `Library/Logs/nxnative`、`work/0100F2C0115B6000/logs`、
+  `work/The Legend of Zelda - Tears of the Kingdom Special Cheats.app`、
+  `work/The Legend of Zelda - Tears of the Kingdom Special 16GB Cheats.app`；
+  同时清除项目内的 `__pycache__`、`.DS_Store` 和 AppleDouble 文件。
+- 保留两套已修正的特别版分卷、`/Applications` 中的王泪 App、
+  `MacNativeGames/TOTK/profile/save`、王泪本体和 1.4.3 更新、`prod.keys`、
+  引擎源码，以及 `work/0100F2C0115B6000/totk` 的 extracted/build/rewritten
+  等下次构建缓存。普通特别版上传目录里的百度网盘断点续传配置也保留。
+- 删除前磁盘可用约 47 GiB，删除后约 48 GiB。旧恢复点和两个测试 App 的
+  逻辑大小为 60 GB，但它们的大量文件与构建缓存、当前 App 共享 APFS 克隆，
+  因此实际只增加约 1 GiB，不能按逻辑大小预估释放量。
+
+#### 2026-11-21：删除王国之泪 App 与构建缓存
+
+- 按用户确认的范围删除 `/Applications` 中的
+  `The Legend of Zelda - Tears of the Kingdom.app`（约 20 GB）和整个
+  `work/0100F2C0115B6000` 王泪构建工作目录（约 42 GB）。
+- 保留
+  `Library/Application Support/MacNativeGames/TOTK/profile/save`：
+  删除前后仍为 38 个文件、17 MB。保留王泪本体 XCI 16 GB、1.4.3 更新
+  460 MB 和 `prod.keys`；密钥 SHA-256 仍为
+  `039895c6e93a0c6208c3af27da8c3fc408083873a96f2320dc334a6fa252c112`。
+- 两套修正后的普通／低配特别版分卷、各自的 SHA-256 和中文
+  `解压说明.txt` 均保留。MacNativeGames 运行时着色器缓存和引擎源码未删。
+- 删除前磁盘可用约 48 GiB，删除后约 70 GiB，实际释放约 22 GiB。
+  App 和构建目录的逻辑大小合计约 62 GB；差额来自 APFS 克隆共享块。
+
+#### 2026-11-21：耀西构建暂停点
+
+- 首次完整构建耀西时，NUP 已解包 19.4 GB、文件头校验通过，模块重写和
+  133,154 个 shader 的拆分完成；完整 Mac shader 编译到约 95% 时按用户要求
+  暂停，准备关机。
+- 已停止 `hermit.py`、`build_ipa_from_nsp.py`、Metal 编译和全部子进程。
+  未安装、未生成最终 App。保留状态：
+  `work/0400245021D2C000` 约 63 GB，其中
+  `shader/cache/cas-9c1a9324c032.db` 约 38 GB；解包、重写、shader map、
+  缓存数据库和引擎源码都未删除。
+- 用户提供的 `Downloads/YX/logo.webp` 已转换为 1920×1920
+  `Downloads/YX/logo.png`。NUP 自带提取结果里没有 `control.nacp` 或
+  `icon.jpg`，因此恢复构建时必须传 `--icon`，让最终 App 使用该 logo。
+- 到家恢复命令：
+
+  `.venv/bin/python hermit.py build /Users/amid031799/Downloads/YX --icon /Users/amid031799/Downloads/YX/logo.png`
+
+  构建完成后安装：
+
+  `.venv/bin/python hermit.py install`
+
+#### 2026-11-21：耀西首次构建与安装
+
+- 恢复后完整 shader 的 133,154 个编译结果已全部进入 SQLite 编译缓存，但
+  完整最终 shader 库镜像也需要约 42 GB，必须与约 42 GB 编译缓存同时存在。
+  两次发布都在最后写库阶段因磁盘不足失败；未删除分卷、ROM 或存档。
+- 为完成可运行安装，改用 nxnative 官方 `--quick`
+  （`--seen-shaders`）：使用 profile 已验证的 1,519 个 shader，最终库
+  1,521 个，其中 1,520 个直接来自缓存；未覆盖的区域可能缺少 shader，
+  后续有空间时应再跑完整构建。
+- 用户提供的 `Downloads/YX/logo.webp` 已转为 1920×1920
+  `Downloads/YX/logo.png`，并通过 `--icon` 打进 App。最终
+  `Contents/Resources/AppIcon.icns` 为 3.4 MB，
+  `CFBundleIconFile=AppIcon`；NUP 本身没有 `control.nacp`／`icon.jpg`，
+  所以使用的是该 logo。
+- 构建结果：nxnative `c8c58e6c5193`，NUP update v131072，Mac App
+  约 19.9 GB，bundle ID `org.nxnative.0400245021d2c000`；pipeline archive
+  `applegpu_g15s` 79.7 MB。深度签名校验通过，已安装到
+  `/Applications/Yoshi and the Mysterious Book.app`。
+- `hermit.py install` 删除了 App 不再需要的 22.2 GB 打包中间副本，但保留
+  `work/0400245021D2C000/shader/cache/cas-9c1a9324c032.db`
+  完整 shader 编译缓存，便于以后补齐完整库。安装后工作目录约 45 GB，
+  磁盘可用约 32 GiB。首次启动尚未运行，存档目录会在首次启动时创建。
+
