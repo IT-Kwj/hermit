@@ -1,2 +1,5 @@
-S2M_ENGINE=nxnative-033cbe594bf8
-S2M_BUILD=No Lag Kart (1.8.0)
+S2M_ENGINE=nxnative-a235328d5966
+S2M_BUILD=kid-with-sword-remake
+DM_UPSCALER=metalfx
+DM_FPS_HOLD=off
+DM_ALIAS_SIZE=0x200000000

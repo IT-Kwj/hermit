@@ -979,3 +979,50 @@ DM_FOCUS_KEEP=1
   完整 shader 编译缓存，便于以后补齐完整库。安装后工作目录约 45 GB，
   磁盘可用约 32 GiB。首次启动尚未运行，存档目录会在首次启动时创建。
 
+#### 2026-11-22：时之笛低配版设置页汉化补全并重新分包
+
+- 时之笛低配引擎 `nxnative-a235328d5966` 的设置行有 7 列、8 列和 9 列
+  三种形式。此前 `tools/engine/patch.py` 的按变量汉化逻辑错误地要求至少
+  9 列，导致 `DM_DYNAMIC_RESOLUTION`、`DM_WIDE_VIEW`、`DM_MIC`、
+  `DM_SW2`、`DM_PRESENT_SNAP`、`DM_PSO_MTL4`、`DM_NVN_ENC_THREAD`、
+  `DM_NVN_TEX_MIP_SKIP`、`DM_FPS_HOLD` 等 7/8 列项目仍显示英文。
+- 现改为按第一列环境变量识别，只要设置行有至少 7 列就替换 label、note
+  和选项显示值。启动页与游戏内 2 键设置页都读取最终
+  `Contents/Resources/dm/launcher.json`；重建后该文件的 25 个设置项已
+  全部中文化。剩余拉丁字符只有 MetalFX、Switch 2、Joy-Con 2、
+  Pro Controller 2、macOS、GPU、3D 等产品或技术名称。
+- 低配引擎 `kid-with-sword-remake` 增量重建完成，App 约 34.3 GB，
+  bundle ID `org.nxnative.0400486024dec000`，版本是 NUP update
+  v131072。42,848 个 shader、pipeline archive 和 prewarm 均复用；
+  `codesign --verify --deep --strict` 通过。按用户要求不安装，保留工作
+  App 供测试。
+- App 的 `Contents/Resources/romfs.img`、`msl`、`pso` 三个符号链接均
+  保留。删除旧的
+  `Downloads/The Legend of Zelda - Ocarina of Time Low Memory App upload/`
+  后，使用 `zip -s 3g -r -y` 重新制作，现为 `.z01` 到 `.z09` 加最后
+  `.zip`，共 10 个文件、约 29 GB。
+- 对新分卷逐卷校验 SHA-256 全部 OK，并按顺序拼接后用 macOS `bsdtar`
+  完整流式解压到 `/dev/null` 通过。`zipinfo` 确认三个关键链接属性为
+  `lrwxr-xr-x (120755)`，`Contents/MacOS/dmhost` 为
+  `-rwxr-xr-x (100755)`。
+- 中文 `解压说明.txt` 已同步更新，包含全部文件名、SHA-256 校验、
+  `zip -s 0` 合并、`ditto` 解压、签名检查以及 Keka 图形界面步骤；特别
+  注明不能使用会丢失符号链接的在线解压，否则会出现
+  “game data inside this app is missing or incomplete”。
+
+#### 2026-11-22：时之笛低配构建清理
+
+- 按用户要求保留低配版分卷压缩，删除低配专属的工作 App
+  `work/The Legend of Zelda - Ocarina of Time.app`（约 34.3 GB）、
+  克隆标记 `work/The Legend of Zelda - Ocarina of Time.app.key` 和低配
+  引擎 `engines/nxnative-a235328d5966`（约 966 MB）。
+- 保留 `work/0400486024DEC000`（约 54 GB）作为时之笛共用的解包、
+  shader／pipeline 与重新构建缓存；保留
+  `Downloads/The Legend of Zelda - Ocarina of Time Low Memory App upload/`
+  的 10 个分卷、SHA-256 和中文解压说明，共约 29 GB。
+- 已安装的 azmasm／`e5de1ecebbca` App 未改动，深度签名校验通过；
+  `Application Support/nxnative/0400486024DEC000/save` 的 14 个文件、
+  `pso_archive` 和原始 NUP 均保留。磁盘可用空间从约 49 GiB 增至约
+  54 GiB；工作 App 与构建缓存有 APFS 克隆共享块，因此逻辑大小
+  34.3 GB 不等于实际释放量。
+

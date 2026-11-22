@@ -77,6 +77,8 @@ def main():
                "    if not any(r.get('env') == 'DM_OVERLAY' for r in d['settings']): d['settings'].insert(at, ov)\n")
         st.write_text(s.replace(w, row + w, 1)); print('  settings.py: Performance overlay row')
     settings_zh(nx)
+    settings_rows_zh(nx)
+    game_marks_zh(nx)
     hle_net_poll(nx)
     no_lag_pso_batch(nx)
 
@@ -195,6 +197,105 @@ def settings_zh(nx):   # switch2mac's Chinese labels/notes for the generic rows 
                  "             ('nl', '荷兰语'), ('fr-CA', '加拿大法语'), ('pt', '葡萄牙语'), ('ru', '俄语'), ('ko', '韩语'), ('zh-Hant', '繁体中文'), ('zh-Hans', '简体中文'), ('pt-BR', '巴西葡萄牙语')]")
     if old_langs in n:
         np_.write_text(n.replace(old_langs, new_langs)); print('  nacp.py: Chinese language names')
+
+
+def settings_rows_zh(nx):   # by variable, not by the whole line: nxnative's capitalization and conditions differ between ports
+    path = nx / 'dm/games/settings.tsv'; s = path.read_text()
+    labels = {
+        'DM_FPS_TARGET': '帧率',
+        'DM_FRAMEGEN': '帧生成',
+        'DM_DYNAMIC_RESOLUTION': '动态分辨率',
+        'DM_RENDER_SCALE': '渲染比例',
+        'DM_WIDE_VIEW': '宽屏视野',
+        'DM_OPMODE': '主机模式',
+        'DM_PRESENT_UPSCALE': '画面放大',
+        'DM_UPSCALER': '游戏内置升频器',
+        'DM_LANG': '游戏语言',
+        'DM_FULLSCREEN': '显示模式',
+        'DM_OVERLAY': '性能悬浮层',
+        'DM_MIC': '麦克风',
+        'DM_MIC_BOOST': '麦克风灵敏度',
+        'DM_RUMBLE': '手柄震动',
+        'DM_RUMBLE_GAIN': '震动强度',
+        'DM_RUMBLE_MIN': '震动阈值',
+        'DM_PAD_PRESS_TO_JOIN': '按键加入',
+        'DM_SW2': 'Switch 2 手柄',
+        'DM_PRESENT_SNAP': '帧缓冲',
+        'DM_PSO_MTL4': 'Metal 4 管线',
+        'DM_PSO_PREBUILD': '管线预构建',
+        'DM_NVN_ENC_THREAD': '编码线程',
+        'DM_NVN_TEX_MIP_SKIP': '纹理内存节省',
+        'DM_FPS_HOLD': '掉帧时保持帧',
+        'DM_METAL_HUD': '性能信息',
+        'DM_PICTURE_FIT': '画面',
+        'DM_SHOW_FPS': '帧率显示',
+        'DM_TOUCH_HAPTICS': '触摸反馈',
+        'DM_PAD_THEME': '触屏控制样式',
+        'DM_SCREEN_ASPECT': '画面形状',
+        'DM_PRESET': '画面预设',
+        'DM_FPS_LOCK': '帧率锁定',
+        'DM_NVN_TEX_FLOOR': '纹理质量',
+        'DM_FAST_720': '快速模式',
+        'DM_FULL_DOCKED': '完整底座画面',
+    }
+    notes = {
+        'DM_FRAMEGEN': '游戏每秒绘制 30 帧，MetalFX 在每两帧之间生成一帧，因此屏幕显示 60 帧。它比真实 60 帧更省性能和发热，但输入延迟更高；快速运动可能出现拖影。',
+        'DM_DYNAMIC_RESOLUTION': '让游戏在高负载时自动降低分辨率；关闭后保持所选主机模式的完整分辨率。',
+        'DM_WIDE_VIEW': '以 iPhone 屏幕自身的比例铺满画面（约 19.5:9），视野更宽且没有黑边；3D 摄像机和界面会随屏幕形状调整，不会拉伸。渲染像素约增加五分之一，因此会稍慢、稍热。下一次启动游戏时生效。iPhone 默认开启；iPad 保持 16:9。',
+        'DM_PRESENT_UPSCALE': '会使用更多 GPU 时间，可能增加发热。',
+        'DM_OVERLAY': '游戏中按 1 键循环切换：紧凑（帧率 + 分辨率）→ 详细（图表、GPU、帧时间、CPU、内存）→ 关闭。',
+        'DM_MIC': '让需要听声音的游戏能够听到你，例如通过哼唱或吹口哨来演奏时之笛。系统只会询问一次麦克风权限；在 iPhone 上，游戏声音会通过同时录音的音频会话播放。推荐开启以使用语音演奏时之笛。',
+        'DM_MIC_BOOST': '提高房间里较轻微、但仍能被识别出的哼唱和口哨声。高灵敏度还能听到更轻的音符，但也会收入更多环境声和游戏自身声音；关闭时把原始麦克风输入交给游戏。',
+        'DM_SW2': '通过蓝牙使用 Joy-Con 2 和 Pro Controller 2：游戏中按住手柄上的 Sync 键配对。macOS 会请求一次蓝牙权限。',
+        'DM_PRESENT_SNAP': '最多增加一帧显示延迟。',
+        'DM_PSO_MTL4': '保留管线归档；占用更多内存。',
+        'DM_PSO_PREBUILD': '首次启动会为此等待几分钟，仅一次。',
+        'DM_NVN_TEX_MIP_SKIP': '大型纹理会省略最精细的层级：内存占用约为原来的四分之一，区域加载更短，近距离画面会稍软。iPhone 默认开启。',
+        'DM_PICTURE_FIT': '“填充”会裁切游戏的 16:9 画面以铺满屏幕，边缘的血条、字幕或地图可能被切掉；不裁切的全屏画面需要为每个游戏单独打补丁。',
+        'DM_PAD_THEME': '屏幕触控按键的颜色。',
+        'DM_SCREEN_ASPECT': '渲染像素约多四分之一：会稍慢、稍热。',
+        'DM_PRESET': '同时设置纹理质量、渲染比例、帧率、放大方式和性能开关；修改其中一项后会变为“自定义”。',
+        'DM_FPS_LOCK': '30 帧会锁定游戏步进，避免在 30 和 60 之间跳动；60 帧在设备跟不上时会变成慢动作。',
+        'DM_NVN_TEX_FLOOR': '越低越省内存（更少卡顿）；近看表面会更模糊，但清晰度和渲染比例一致。',
+        'DM_FAST_720': '3D 画面约 720p，由 MetalFX 放大：更快但稍软。开启时替代渲染比例和游戏内置升频器。',
+        'DM_FULL_DOCKED': '以 Switch 2 完整底座尺寸 1920x1080 绘制（而非 1536x864）：更清晰，每帧约慢 2-3 ms。',
+    }
+    options = (
+        ('30 fps', '30 帧'), ('60 fps', '60 帧'), ('120 fps', '120 帧'),
+        ('Docked', '底座模式'), ('Handheld', '掌机模式'),
+        ("Game's own", '游戏自带'), ('Standard', '标准'),
+        ('Window', '窗口'), ('Fullscreen', '全屏'),
+        ('Normal', '正常'), ('High', '高'), ('Off', '关闭'),
+        ('Classic', '经典'), ('Forest', '森林'),
+        ('Custom', '自定义'), ('Full', '完整'), ('Medium', '中'), ('Low', '低'),
+        ('Game decides', '游戏决定'), ('Locked 30 fps', '锁定 30 帧'), ('Locked 60 fps', '锁定 60 帧'),
+        ('Match screen', '匹配屏幕'), ('iPhone Duo screen', 'iPhone Duo 屏幕'),
+        ('Automatic', '自动'),
+    )
+    changed = False
+    out = []
+    for line in s.splitlines(True):
+        ending = '\n' if line.endswith('\n') else ''
+        body = line[:-1] if ending else line
+        fields = body.split('\t')
+        if len(fields) >= 7 and fields[0] in labels:
+            fields[2] = fields[2]
+            for old, new in options: fields[2] = fields[2].replace(old, new)
+            fields[6] = labels[fields[0]]
+            if fields[0] in notes: fields[7] = notes[fields[0]]
+            body = '\t'.join(fields)
+        out.append(body + ending)
+    t = ''.join(out)
+    if t != s:
+        path.write_text(t); print('  settings.tsv: Chinese labels, notes and options by variable')
+
+
+def game_marks_zh(nx):   # the render-scale preset name lives in each game profile, not settings.tsv
+    for path in nx.glob('dm/games/*/game.tsv'):
+        s = path.read_text()
+        t = s.replace('0.25=Ultra Potato Mode 🥔', '0.25=超低画质模式 🥔')
+        if t != s:
+            path.write_text(t); print(f'  {path.parent.name}/game.tsv: Chinese render-scale mark')
 
 
 if __name__ == '__main__':
