@@ -1,0 +1,29 @@
+{
+ "title_id": "01001C8016B4E000",
+ "name": "FIFA 23 Legacy Edition",
+ "version": "1.0.3, 1.0.0",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v196608",
+    "v0"
+   ],
+   "version_names": {
+    "v196608": "1.0.3",
+    "v0": "1.0.0"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "ff2d3efea61a778a6c59964b621c399af1d9f217"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.3, 1.0.0) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

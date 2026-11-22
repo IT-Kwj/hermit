@@ -1,0 +1,25 @@
+{
+ "title_id": "010070E022546000",
+ "name": "Fate/hollow ataraxia REMASTERED",
+ "version": "1.0.2 b723",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v131072"
+   ],
+   "version_names": {},
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "25ef427e4fc4a25967a52320456a70f1006eb8c4"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.2 b723) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

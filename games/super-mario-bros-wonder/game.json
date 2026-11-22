@@ -11,7 +11,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "f35ebba74c8267f54b22a8b4c438047eb77ed1ae"
+    "commit": "fa549e08c39c01e054528ed68ef857296bd4a9b1"
    },
    "shader_list": "shader_list.tsv",
    "about": "nxnative's tested profile with Hermit's overlay and key-2 settings: 1.0.0, 1.0.1 or 1.2.1. 60 fps on an M1 Max."
@@ -22,7 +22,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "fab0882076039478b07a160abae1c91cc1e367bd",
+    "commit": "3964c8a2e09723aeb0696eef2b7fa0e9e1a13f29",
     "builder": {
      "script": "games/wonder/scripts/build_wonder.py",
      "cwd": "games/wonder",

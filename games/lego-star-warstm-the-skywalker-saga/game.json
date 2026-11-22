@@ -1,0 +1,27 @@
+{
+ "title_id": "010042D00D900000",
+ "name": "LEGO® Star Wars™: The Skywalker Saga",
+ "version": "1.10.0",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v589824"
+   ],
+   "version_names": {
+    "v589824": "1.10.0"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "7ebb76eda8ec1c532a4fc52170f2c5e13b18e80f"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.10.0) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

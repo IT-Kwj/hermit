@@ -28,7 +28,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "15f75033fef2fc99ea26dfe20a9c2e06555de1e2",
+    "commit": "3964c8a2e09723aeb0696eef2b7fa0e9e1a13f29",
     "builder": {
      "script": "games/odyssey/scripts/build_odyssey.py",
      "cwd": "games/odyssey",

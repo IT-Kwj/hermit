@@ -1,0 +1,27 @@
+{
+ "title_id": "010051C0134F8000",
+ "name": "DRAGON BALL Z: KAKAROT + A NEW POWER AWAKENS SET",
+ "version": "1.70",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v1048576"
+   ],
+   "version_names": {
+    "v1048576": "1.70"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "16608f8359bcb15d2583e6332832963e78ac2af1"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.70) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
