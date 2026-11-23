@@ -10,7 +10,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "4a19455866ae2c4775e5201b7de0ad3dcb111560"
+    "commit": "3d36dbbeb62a62117dd8ff362b86c611eb1ac135"
    },
    "shader_list": "shader_list-macnativegames.tsv",
    "watch": [
@@ -44,7 +44,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "47578ded0deea63eda75443fb7b89839769a37f8"
+    "commit": "033793f0ba39f33816d2a6a843a1cebe6de4266a"
    },
    "about": "Upstream nxnative with Hermit's overlay and key-2 settings, for version 1.9.0.",
    "version_names": {

@@ -2,7 +2,7 @@
 
 Title ID `01004D300C5AE000`. A **Switch** game: built from your own copy's `.xci` / `.nsp` files with your own `prod.keys` (see [LEGAL.md](../../LEGAL.md)). Version 1.0.0.
 
-Built with [MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT): its [`games/kirby`](https://github.com/ly05010419/MacNativeGames/tree/3964c8a2e09723aeb0696eef2b7fa0e9e1a13f29/games/kirby) port, at the commit `game.json` names, run through that port's own builder as its README describes. Community port, early. Base game 1.0.0 (.nsp or .xci); an .nsp carries no system fonts, so add your firmware. It has its own runtime, so Hermit's overlay and key-2 settings are not added: the port has its own. Needs Homebrew's `python@3.14`, `opus` and `libvpx`.
+Built with [MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT): its [`games/kirby`](https://github.com/ly05010419/MacNativeGames/tree/083513c7eec8f8a8891e066aeb10b470914537f1/games/kirby) port, at the commit `game.json` names, run through that port's own builder as its README describes. Community port, early. Base game 1.0.0 (.nsp or .xci); an .nsp carries no system fonts, so add your firmware. It has its own runtime, so Hermit's overlay and key-2 settings are not added: the port has its own. Needs Homebrew's `python@3.14`, `opus` and `libvpx`.
 
 ## Build
 
