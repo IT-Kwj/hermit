@@ -1026,3 +1026,220 @@ DM_FOCUS_KEEP=1
   54 GiB；工作 App 与构建缓存有 APFS 克隆共享块，因此逻辑大小
   34.3 GB 不等于实际释放量。
 
+#### 2026-11-22：荒野之息 1.9.0 构建与安装
+
+- 使用 `Downloads/KYZX` 中的 1.6.0 基础 XCI 和 1.9.0 更新 NSP，
+  按当前 Mac 的推荐方案构建 MacNativeGames `4a19455866ae`；开启原生
+  4K/5K。构建耗时约 16 分钟，15,528 个启动 shader 中预编译 15,473 个，
+  `applegpu_g15s` 的 18,250 条 pipeline 全部成功。
+- 固件 21.0.0 的共享字体需要 `key_area_key_application_14`，现有
+  三份用户 `prod.keys` 都只提供到 master key 12，因此字体提取被阻止。
+  没有获取、复制或记录新密钥；改用本机 CrossOver 中已有的开源
+  Source Han Sans（SIL OFL 1.1）生成六份合法 BFTTF 共享字体，
+  `build_app.py` 的字体清单校验通过。标准、简体、繁体、韩文均使用
+  对应的思源黑体；任天堂专用按键图标槽使用同一开源字体，可能缺少少数
+  主机按键图形。
+- 生成 App 约 16 GB，bundle ID `org.macnativegames.botw`，版本
+  1.9.0；`codesign --verify --deep --strict` 通过。按用户要求直接安装到
+  `/Applications/The Legend of Zelda - Breath of the Wild.app`，没有制作
+  分卷压缩包，也没有启动游戏。
+- `hermit.py install` 删除了工作目录中的待安装 App，保留
+  `work/01007EF00011E000` 约 33 GB 的代码、RomFS、shader 和 pipeline
+  重建缓存。首次启动时 macOS 可能先扫描 App 1-3 分钟；运行时存档和缓存
+  将写入 `Application Support/MacNativeGames/BotW`。
+
+##### 新密钥后的原版字体重建
+
+- 用户替换 `Downloads/KYZX/prod.keys` 后，文件包含 master key 0-16 和
+  `key_area_key_application_14`。上次检查误判缺失，是因为该密钥文件用
+  空白分隔名称和值，而检查脚本只按 `=` 截断；没有读取或输出密钥值。
+- 删除开源替代字体目录后，从固件 21.0.0 重新提取六份共享字体。
+  `manifest.json` 的完整性记录为逐 NCA 校验 FS header 和六层 IVFC，
+  不再是上次的开源字体替代清单。
+- 代码、RomFS、shader、pipeline 全部复用，重构建约 2 分钟，18,250 条
+  pipeline 再次验证 0 失败；新 App 约 16 GB，深度签名校验通过，已覆盖
+  安装到 `/Applications/The Legend of Zelda - Breath of the Wild.app`。
+  未制作分卷包，保留 `work/01007EF00011E000` 约 33 GB 重建缓存。
+
+#### 2026-11-22：荒野之息 1.9.0 金手指页
+
+- 用户提供的 `Downloads/KYZX/CD57B23FA4BBAD65.txt` 是 1.9.0 的
+  Atmosphère 金手指文件。Hermit 的 `build` 新增 `--cheats <file>`，把文件
+  复制到 App 的 `Contents/Resources/totk/cheats/cheats.txt`；原文件仍只在
+  Downloads，不进入仓库。
+- 文件开头没有节名的版本头/基础代码块不会被载入，因为它没有可对应的菜单项，
+  也无法安全判断何时启用。打包时保留从第一个 `[名称]` 或 `{主代码}` 开始
+  的 28 个有名字段。
+- 移植 MacNativeGames 的通用 Atmosphère 金手指 VM，并接入 TOTK/BotW 共用
+  运行时。1 键设置面板新增“金手指 / Cheats”页，每个条目一个开关，底部
+  “全部关闭 / Turn all off”一键清除。开关保存在
+  `Application Support/MacNativeGames/BotW/cheats-enabled.txt`，重启后恢复；
+  第一次启用会先备份整个 `profile` 为 `profile-before-cheats`。
+- 代码型金手指通过 main 的第二个可写物理页映射切换，游戏自身页保持
+  RX，不临时改成可写；每次写入后刷新指令缓存。关闭时逐字恢复修改前内容；
+  两条金手指争用同一地址会拒绝后启用的一条。
+- 当前文件识别 28 条，其中 25 条可作为代码开关执行。`速度提升` 和
+  `时停延长 (按下方向键下取消)` 使用按键条件包住代码写入，
+  `武器耐久度不减` 写入目标 `main+0x21A1BD0`，超出该 1.9.0 主程序可执行
+  范围；这三条在页面中显示为不支持并禁用，避免误写。
+- 用临时状态启用“无限精力”和“无限弓箭”跑过真实的
+  `pipeline-archive` 路径：writable alias 建立，2 条在启动时成功启用，
+  18,250 条 pipeline 全部成功。没有在用户存档上启用或留下测试开关。
+- 最终 App 约 16 GB，bundle ID `org.macnativegames.botw`，深度签名通过，
+  已覆盖安装到 `/Applications/The Legend of Zelda - Breath of the Wild.app`。
+  没有制作分卷包；`work/01007EF00011E000` 约 33 GB 重建缓存保留。
+
+##### 金手指关闭修复
+
+- 用户实测金手指能开启，但切换按钮无法关闭。原因是关闭路径仍调用开启时的
+  代码校验；已经写成跳转/替换指令的站点会被当成“当前指令异常”再次拒绝，
+  所以状态一直留在开启。
+- 新增独立的 `code_restore`：关闭和“全部关闭”只根据开启时保存的原指令和
+  已拥有地址逐字还原，不再校验已经被金手指改写的当前指令。恢复仍通过 main
+  的可写物理页别名并刷新指令缓存。
+- 启动恢复已保存开关时，两条金手指争用同一地址会让后一条不生效；现在同时
+  从状态文件移除这条未生效的开关，避免页面显示“已开”但实际没有生效。
+- 修复版重新构建并安装。再次用“无限精力”和“无限弓箭”通过真实
+  `pipeline-archive` 路径验证，2 条均成功启用，18,250 条 pipeline 全部正常。
+  用户下次启动时，现有状态里与“一键还原”冲突的两项会被自动清理。
+
+#### 2026-11-22：旷野之息特殊版与清理
+
+- 按用户要求删除 `/Applications/The Legend of Zelda - Breath of the Wild.app`
+  和 `Application Support/MacNativeGames/BotW` 下的 `profile` 与
+  `profile-before-cheats` 两份存档。ROM、密钥、shader-cache、金手指和普通
+  构建缓存保留；特殊版不安装。
+- 王国之泪特殊版补丁不能直接应用到当前设置页，因为它与后来加入的金手指页
+  重叠。按同一目标手工移植为 `work/botw-special-private-ui.patch`：移除
+  “访问主页”、着色器贡献页/上传、性能排行榜页/上传、截图分享页/上传和
+  启动时的着色器共享询问；本地截图、金手指页、原生 4K/5K 保留。
+- 修改前恢复点：
+  `work/restorepoints/botw-special-before-20261122-222258/`。特殊版使用
+  MacNativeGames `4a19455`、旷野之息 1.9.0、原版固件共享字体和当前完整
+  shader/pipeline 缓存构建，约 16 GB；18,250 条 pipeline 全部成功，深度
+  签名校验通过。
+- 分卷位于
+  `Downloads/The Legend of Zelda - Breath of the Wild Special App upload/`：
+  `.z01` 到 `.z04` 加最后 `.zip`，共 5 个文件、约 13 GB。`zip -s 3g -r -y`
+  保留了四个关键符号链接，`Contents/MacOS/BotW` 保持可执行；SHA-256 校验、
+  ZIP 元数据和完整流式 `bsdtar` 解压均通过。
+- 中文 `解压说明.txt` 包含命令行和 Keka 两种解压方法，并注明特殊版移除的
+  项目。工作目录中的特殊版 App 已删除，源码特殊版改动已反向还原并与恢复点
+  逐文件核对一致；只保留特殊版分卷和可复用补丁。
+
+##### 特殊版测试 App 重建
+
+- 用户需要测试特殊版，重新应用 `work/botw-special-private-ui.patch`，使用同一
+  套 1.9.0 原版字体、完整 shader/pipeline 缓存构建，约 2 分钟完成。
+- 测试 App 保留在
+  `work/The Legend of Zelda - Breath of the Wild Special.app`，约 16 GB；
+  18,250 条 pipeline 正常，金手指文件在包内，深度签名校验通过。
+- App 没有安装到 `/Applications`；旷野之息普通 App 和存档仍保持删除状态。
+  源码特殊版改动再次反向还原并与恢复点逐文件核对一致，现有 5 个分卷包未改动。
+
+#### 2026-11-23：解压说明固定模板
+
+以后所有分卷任务的 `解压说明.txt` 都以
+`docs/templates/解压说明模板.txt` 为唯一固定模板。该文件是用户提供的
+`Downloads/The Legend of Zelda - Breath of the Wild Special App upload/解压说明.txt`
+的逐字副本，原下载目录中的文件删除后不影响此模板。只允许替换标题中的
+游戏/版本/版本类型、分卷基名、分卷编号与数量、SHA-256 文件名和 App 文件名；
+不要增加、删除或改写其他正文，不要追加命令行解压、Keka 或其他额外说明。
+
+固定模板如下：
+
+```text
+塞尔达传说：旷野之息 1.9.0 特殊版
+macOS App 分卷压缩包
+
+一、文件要求
+
+请把以下文件全部下载到同一个文件夹：
+
+  The Legend of Zelda - Breath of the Wild Special.z01
+  The Legend of Zelda - Breath of the Wild Special.z02
+  The Legend of Zelda - Breath of the Wild Special.z03
+  The Legend of Zelda - Breath of the Wild Special.z04
+  The Legend of Zelda - Breath of the Wild Special.zip
+  The Legend of Zelda - Breath of the Wild Special.sha256
+
+缺少任意一个分卷都无法完整解压。不要改名，也不要把分卷分别解压。
+
+这个 App 不包含存档，也不会覆盖其他 App 的存档。
+
+二、先检查文件是否完整
+
+打开“终端”，进入所有分卷所在的文件夹，然后执行：
+
+  cd ~/Downloads
+  shasum -a 256 -c "The Legend of Zelda - Breath of the Wild Special.sha256"
+
+全部显示 OK 后再解压。如果有 FAILED，请重新下载对应的分卷。
+
+三、使用 fastzip 解压
+
+1. 安装fastzip。
+2. 找到最后那个
+   “The Legend of Zelda - Breath of the Wild Special.zip”
+   选中后鼠标右键选择解压到单独文件夹。
+4. fastzip 会自动读取同目录下的 .z01 至 .z04，不需要逐个打开。
+5. 解压完成后启动
+   “The Legend of Zelda - Breath of the Wild Special.app”。
+
+不要使用会丢失符号链接的在线解压，也不要只单独解压某个分卷。否则启动时可能出现：
+
+  The game data inside this app is missing or incomplete
+
+如果出现这个提示，请删除本次解压出来的 App，改用上面的方法，从原始分卷重新解压。
+
+五、特殊版说明
+第一次启动时 macOS 可能扫描 App 1～3 分钟；首次进入游戏时也可能需要加载着色器和管线。
+```
+
+#### 2026-11-23：旷野之息特殊版 + 金手指低配版
+
+- 先确认高配特殊版分卷完整，然后按用户要求删除工作目录中的高配测试 App
+  `work/The Legend of Zelda - Breath of the Wild Special.app`，以及测试运行
+  产生的 `BotW/profile` 和 `profile-before-cheats`。高配的 5 个分卷、SHA-256
+  和 `解压说明.txt` 保留。
+- 重新应用 `work/botw-special-private-ui.patch` 构建低配版，使用
+  `--no-native-4k --no-native-5k`，并打入 `CD57B23FA4BBAD65.txt` 的 28 个
+  金手指条目。访问主页、着色器贡献、排行榜和截图分享仍按特殊版移除，本地
+  截图和金手指页保留。
+- 低配 App 为
+  `work/The Legend of Zelda - Breath of the Wild Special 16GB Cheats.app`，
+  约 16 GB；原生 4K/5K 标记均不存在，18,250 条 pipeline 成功，深度签名
+  校验通过。按用户本轮要求不安装，工作 App 暂留供测试。
+- 分卷位于
+  `Downloads/The Legend of Zelda - Breath of the Wild Special 16GB Cheats App upload/`，
+  `.z01` 到 `.z04` 加最后 `.zip`，共 5 个文件、约 13 GB；SHA-256 全部通过，
+  完整流式解压通过，四个关键符号链接和 `Contents/MacOS/BotW` 权限保留。
+- `解压说明.txt` 严格由 `docs/templates/解压说明模板.txt` 生成，只替换标题、
+  发布基名、分卷/SHA/App 文件名，没有增加或删改其他正文。构建后特殊版源码
+  已反向还原，并与恢复点逐文件核对一致。
+
+#### 2026-11-23：删除旷野之息全部构建与运行文件
+
+- 按用户要求删除低配特殊版工作 App、`work/01007EF00011E000` 约 33 GB
+  构建缓存、特殊版补丁和恢复点，以及 Downloads 中高配与低配两个分卷上传
+  目录和额外的旷野之息金手指压缩包。
+- 删除 `Application Support/MacNativeGames/BotW` 整目录，包括配置、测试
+  profile、`profile-before-cheats`、运行时 shader-cache 和状态文件。
+  `/Applications` 中没有旷野之息 App。
+- `Downloads/KYZX` 完全保留且未改动，仍有原来的 5 个文件、约 17 GB：
+  1.6.0 基础 XCI、1.9.0 更新 NSP、金手指文本、logo 和 `prod.keys`。
+- 磁盘可用空间从约 27 GiB 增至约 71 GiB。项目源码、共享
+  MacNativeGames 引擎和模板文档不属于旷野之息构建产物，继续保留。
+
+#### 2026-11-23：删除时之笛构建缓存
+
+- 按用户要求删除 `work/0400486024DEC000`（约 54 GiB）和
+  `work/0400486024DEC000-engine-seed.tsv`（约 9.3 MB）。删除前确认没有
+  时之笛游戏进程运行。
+- 保留 `/Applications/The Legend of Zelda - Ocarina of Time.app`（约 37 GiB，
+  深度签名校验通过）、`Application Support/nxnative/0400486024DEC000`
+  （约 1.2 GiB，15 个存档文件）、`Downloads/SHIZHIDI` 原始 NUP（约 24 GiB）
+  和其他游戏数据。
+- 磁盘可用空间从约 72 GiB 增至约 **143 GiB**。以后重新构建时，解包、shader
+  和 pipeline 会重新生成，第一次重建会明显更慢。
+

@@ -1096,7 +1096,9 @@ def engine_build(a, tid, w, e):   # a game on another engine: its own builder do
                 shutil.move(str(out), app)
         else:
             run([py314, d / 'build_app.py', base] + (['--update', upd] if upd else []) + [x for f in dlc for x in ('--dlc', f)]
-                + ['-k', Path(a.keys).expanduser().resolve(), '-o', app, '--work', w / tid] + fonts + eng.get('args', []), env=e, cwd=d, watch=mng_watch)
+                + ['-k', Path(a.keys).expanduser().resolve(), '-o', app, '--work', w / tid]
+                + (['--cheats', Path(a.cheats).expanduser().resolve()] if getattr(a, 'cheats', None) else [])
+                + fonts + eng.get('args', []), env=e, cwd=d, watch=mng_watch)
         mng_fixes(app, g['build'].get('fixes', []))   # Hermit's fixes for this build, on any MacNativeGames commit (game.json "fixes")
     elif DUMP_S1: sys.exit(f'{g["name"]}: {KINDS[eng["kind"]]} builds Switch 2 games only')
     elif eng['kind'] == 'pokopia-native':
@@ -1506,6 +1508,7 @@ def main():
     dp = sub.add_parser('identify'); dp.add_argument('dump'); dp.add_argument('--firmware', help='your unpacked firmware dump (else the one beside your prod.keys is looked for)')
     bp.add_argument('--firmware', help='MacNativeGames builds from an .nsp (and Breath of the Wild): your unpacked firmware dump, for the system fonts')
     bp.add_argument('--shared-fonts', help='MacNativeGames: the six shared fonts an earlier Tears of the Kingdom build extracted, instead of --firmware')
+    bp.add_argument('--cheats', help='MacNativeGames: an Atmosphère cheat .txt for this game build (shown on the 金手指 page)')
     for x in (bp, dp): x.add_argument('--keys', help='a Switch 1 game (.nsp / .nsz / .xci / .xcz): your own prod.keys, passed to the builder only (never copied or kept)')
     for x in (bp, dp):
         x.add_argument('--title-id', help='a Switch cartridge with several games (or files of several games): the one to build, its title ID')
