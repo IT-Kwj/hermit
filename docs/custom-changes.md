@@ -2,7 +2,7 @@
 
 本文档记录在本机对 switch2mac 项目做的自定义修改。合并上游最新代码、或引擎被重新拉取后，按这里的说明恢复这些改动。
 
-更新时间：2026-11-16
+更新时间：2026-11-23
 
 ## 修改总览
 
@@ -11,6 +11,8 @@
 | 中文化 | `tools/engine/patch.py`、`tools/engine/s2m_ui.m` | 设置面板、通用设置、语言名中文 | 已提交 git；`build` 时 `patch.py` 幂等自动应用 |
 | 默认游戏语言 | `games/donkey-kong-bananza/game.json`、`hermit.py` | 打包时默认简体中文（`zh-Hans`） | `build` 自动应用；改 `game.json` 的 `language` 即可 |
 | poll 卡顿修复 | `tools/engine/patch.py`（`hle_net_poll()`） | 引擎 `hle_net.c` 的 poll 空等上限 100 ms | `build` 时 `patch.py` 自动应用 |
+| 麦克风授权兼容修复 | `tools/engine/s2m_launcher.swift` | 补齐 `launcher.c` 引用的 `dm_mac_microphone_consent`，避免 Mac App 链接失败 | `build` 时 `launcher_window()` 自动应用到引擎 |
+| 勇者斗恶龙 VII 中文与帧率 | `tools/engine/patch.py`、`builds/dq7/.../profile/.../game.tsv` | 中文 App 名称、默认简体中文、启动页与 2 面板的 30/60 帧选项 | 按 §2c 保留临时 profile 的 `fps_target 60`，构建时传 `--language zh-Hans --app-name "勇者斗恶龙 VII 重制版"` |
 | 游戏图标（每次构建必做） | 源 logo → `builds/<游戏>/<tid>/extract/v<版本>/icon.jpg` | 自定义 App 图标，构建后必须验证非空白 | 构建前手动生成 `icon.jpg`，见 §3 |
 | 存档迁移 | 旧 `work/run/save/` → nxnative App 存档目录 | 恢复旧进度 | 手动复制 `account.sav` |
 
@@ -53,6 +55,141 @@ static int sk_idle(int64_t ms) { if (ms > 100) ms = 100; dm_guest_sleep_ns((ms <
 ### 注意
 
 之前在 switch2mac 引擎上试过同样的改动，出现过一次选完赛道后 SIGBUS（后来回滚）。本次在 nxnative 引擎上应用后需重点验证“进赛道 / 退出到首页”不崩溃。若复现崩溃，回滚 `patch.py` 里的 `hle_net_poll()`，再单独排查。
+
+## 2b. 麦克风授权兼容修复
+
+### 问题
+
+部分 nxnative 版本的 `dm/mac/launcher.c` 会调用
+`dm_mac_microphone_consent()`，但 `dm/mac/pack_app.py` 没有链接这个符号，最后一步
+打包时会出现：
+
+```text
+Undefined symbols for architecture arm64:
+  "_dm_mac_microphone_consent", referenced from:
+      _microphone_at_launch in launcher.o
+```
+
+### 修改
+
+`tools/engine/s2m_launcher.swift` 导入 `AVFAudio`，并导出
+`dm_mac_microphone_consent()`：
+
+- 已授权时返回 `1`；
+- 已拒绝时返回 `0`；
+- 尚未决定时同步等待系统的麦克风授权结果。
+
+`build` 时 `hermit.py` 的 `launcher_window()` 会把这份源码写进引擎，所以以后重新拉取
+引擎副本也能自动恢复。该修复只影响启动器链接与麦克风权限，不影响游戏本体或存档。
+
+## 2c. 勇者斗恶龙 VII 中文与帧率
+
+Switch 2 版《勇者斗恶龙 VII Reimagined》（`0100505021440000`）目前使用临时游戏配置。
+游戏自身会把 NVN 呈现间隔设为 2，因此默认运行在 30 FPS；实测 GPU 每帧约 4–5 ms，
+不是性能瓶颈。
+
+该版本使用 Unreal Engine，构建时的重写工具已经找到 `t.MaxFPS` 和
+`rhi.SyncInterval`。临时 profile 的
+`builds/dq7/0100505021440000/profile/0100505021440000/game.tsv` 增加了：
+
+```text
+fps_target 60
+```
+
+这样宿主编译时的默认帧率是 60，同时 `settings.py` 会开放“帧率”设置行。启动页和
+`2` 面板都能在“30 帧 / 60 帧”之间切换，默认选 60。不要再把
+`DM_FPS_TARGET=60` 写进 App 的 `dm/env.txt`：env 文件中的值会锁定面板选项，使其
+无法切换。
+
+构建命令另外使用：
+
+```text
+--language zh-Hans
+--app-name "勇者斗恶龙 VII 重制版"
+```
+
+因此 `CFBundleName`、`CFBundleDisplayName`、窗口标题和 Finder 名称均为中文，
+`DMLanguage` 与启动页的游戏语言默认值均为 `zh-Hans`。
+
+通用汉化补丁 `tools/engine/patch.py` 也已修正：
+
+- 语言名称不再依赖整行精确匹配，即使上游增加 `pl`、`th` 等语言也能翻译；
+- `nacp.py` 的语言菜单显示“韩语 / 繁体中文 / 简体中文”等中文名称；
+- 补上 `DM_MIC_GAIN` 的“麦克风灵敏度”和说明；
+- `DM_FPS_TARGET` 显示“60 帧更流畅；30 帧更省电。”
+
+当前成品：
+
+```text
+/Users/amid031799/Documents/GitHub/switch2mac/builds/dq7/勇者斗恶龙 VII 重制版.app
+```
+
+## 2d. Pokémon Pokopia 汉化与帧率
+
+Pokopia 的 `pokopia-native` 标准版（2.0.1 / v655360）已完成构建并安装到
+`/Applications/Pokemon Pokopia.app`。构建入口必须直接选完整更新目录：
+
+```text
+/Users/amid031799/Downloads/Pokopia/updates/655360
+```
+
+直接选 `/Downloads/Pokopia` 根目录会因没有 `base/exefs/main.npdm` 而无法识别。
+
+`tools/engine/patch.py` 的通用汉化表补充了：
+
+- `DM_LOOK_SCALE` → “视角灵敏度”
+- `DM_LOOK_INVERT_Y` → “上下反转视角”
+
+安装后的启动页和 `2` 键面板已确认全部为中文。
+
+Pokopia 的 `control.nacp` 是 nxs2 临时生成的，只列出英语，因此原构建不会显示
+“游戏语言”行。`tools/engine/patch.py` 的 `pokopia_language_zh()` 会修改
+`pokopia-native/nxs2.py`，在 Mac 启动设置里补上语言列表，并把
+`DMLanguage` 和默认选项设为 `zh-Hans`。可选语言包括简体中文、繁体中文、
+美式英语、日语、韩语、法语、德语、西班牙语、意大利语、葡萄牙语和俄语。
+
+FPS 行没有加入，这是有意为之：Pokopia 使用游戏自身的固定 60 FPS 限制器，
+重写结果里没有 `FPS_TARGET`、Unreal/Unity 帧率变量或其他可安全写入的限制器。
+只加 `DM_FPS_TARGET` 界面行会产生一个无法生效的 30 FPS 按钮，因此不在这个构建里伪造选项。
+
+游戏图标通过 `nxs2.py icon <build> /Users/amid031799/Downloads/Pokopia/logo.png`
+写入，重新打包后确认 `AppIcon.icns` 存在。
+
+### 运行时 shader 与捏脸黑屏
+
+首版 Pokopia 只有游戏文件里的 3,813 个 shader；开场、标题页、捏脸和第一片区域还会
+动态生成最多 154 个 shader。缺一个时对应画面会被跳过，所以捏脸时可能只显示界面、
+看不到人物。
+
+运行游戏后，App 会把缺失 shader 写到：
+
+```text
+~/Library/Application Support/nxnative/0400A3A01EE4C000/shdump/
+```
+
+第一次捏脸记录到 51 组（102 个 `.ctl`/`.code` 文件），验证人物可见；继续游玩后
+用 `nxs2.py build --dumps` 合并到 **111/154**。下一轮记录到 130 组
+（260 个文件），refresh 后再达到 **127/154，另加 1 个不在已知列表中的 shader**；
+剩余 27 个已知 shader 尚未记录。
+
+以后刷新必须注意顺序：
+
+1. 用普通 build 刷新时，`st_corpus` 会从原始游戏文件重建 corpus，把运行 shader
+   清掉；必须把 shdump 作为输入同时传入：
+
+   ```bash
+   python3 nxs2.py build "/Users/amid031799/Downloads/Pokopia/updates/655360" \
+     --out builds/pokopia/0400A3A01EE4C000 --mac-app --no-ios \
+     --dumps "$HOME/Library/Application Support/nxnative/0400A3A01EE4C000/shdump"
+   ```
+
+2. Hermit 的 `install` 会按设计删除 `extract/RomFS.img`。若它已被删除，
+   `nxs2.py refresh` 能编译新 shader，但最后 repack 会报 `no romfs directory`。
+   因此刷新阶段使用上面的 `build --dumps`，它会从原始更新重新生成 RomFS。
+3. 不要把 `refresh` 后再接一次不带 `--dumps` 的完整 build；那样运行 shader 会回到
+   0/154。
+4. 刷新后可直接把 `builds/pokopia/0400A3A01EE4C000/out/Pokemon Pokopia.app`
+   移到 `/Applications`，保留 `extract/`、`shader/` 和 profile，供下一次继续刷新。
 
 ## 3. 游戏图标（每次构建必做）
 

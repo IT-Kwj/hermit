@@ -9,6 +9,7 @@
 
 Each change is found by a line of the pinned commit's source and made once (a second run changes nothing); a line that is not there stops it, naming the file.
 """
+import re
 import sys
 from pathlib import Path
 
@@ -79,6 +80,7 @@ def main():
     settings_zh(nx)
     settings_rows_zh(nx)
     game_marks_zh(nx)
+    pokopia_language_zh(nx)
     hle_net_poll(nx)
     no_lag_pso_batch(nx)
 
@@ -191,12 +193,19 @@ def settings_zh(nx):   # switch2mac's Chinese labels/notes for the generic rows 
     if old_note in t:
         sp.write_text(t.replace(old_note, new_note)); print('  settings.py: Chinese language note')
     np_ = nx / 'dm/tools/nacp.py'; n = np_.read_text()
-    old_langs = ("LANGUAGES = [('en-US', 'American English'), ('en-GB', 'British English'), ('ja', 'Japanese'), ('fr', 'French'), ('de', 'German'), ('es-419', 'Latin American Spanish'), ('es', 'Spanish'), ('it', 'Italian'),\n"
-                 "             ('nl', 'Dutch'), ('fr-CA', 'Canadian French'), ('pt', 'Portuguese'), ('ru', 'Russian'), ('ko', 'Korean'), ('zh-Hant', 'Traditional Chinese'), ('zh-Hans', 'Simplified Chinese'), ('pt-BR', 'Brazilian Portuguese')]")
-    new_langs = ("LANGUAGES = [('en-US', '美式英语'), ('en-GB', '英式英语'), ('ja', '日语'), ('fr', '法语'), ('de', '德语'), ('es-419', '拉美西班牙语'), ('es', '西班牙语'), ('it', '意大利语'),\n"
-                 "             ('nl', '荷兰语'), ('fr-CA', '加拿大法语'), ('pt', '葡萄牙语'), ('ru', '俄语'), ('ko', '韩语'), ('zh-Hant', '繁体中文'), ('zh-Hans', '简体中文'), ('pt-BR', '巴西葡萄牙语')]")
-    if old_langs in n:
-        np_.write_text(n.replace(old_langs, new_langs)); print('  nacp.py: Chinese language names')
+    table = re.search(r'^LANGUAGES = \[(.*?)\]\s*$', n, re.M | re.S)
+    if table:
+        names = {
+            'en-US': '美式英语', 'en-GB': '英式英语', 'ja': '日语', 'fr': '法语',
+            'de': '德语', 'es-419': '拉美西班牙语', 'es': '西班牙语', 'it': '意大利语',
+            'nl': '荷兰语', 'fr-CA': '加拿大法语', 'pt': '葡萄牙语', 'ru': '俄语',
+            'ko': '韩语', 'zh-Hant': '繁体中文', 'zh-Hans': '简体中文',
+            'pt-BR': '巴西葡萄牙语', 'pl': '波兰语', 'th': '泰语',
+        }
+        block = table.group(1)
+        shown = re.sub(r"\('([^']+)', '([^']+)'\)", lambda x: f"('{x[1]}', '{names.get(x[1], x[2])}')", block)
+        if shown != block:
+            np_.write_text(n[:table.start(1)] + shown + n[table.end(1):]); print('  nacp.py: Chinese language names')
 
 
 def settings_rows_zh(nx):   # by variable, not by the whole line: nxnative's capitalization and conditions differ between ports
@@ -215,6 +224,8 @@ def settings_rows_zh(nx):   # by variable, not by the whole line: nxnative's cap
         'DM_OVERLAY': '性能悬浮层',
         'DM_MIC': '麦克风',
         'DM_MIC_BOOST': '麦克风灵敏度',
+        'DM_LOOK_SCALE': '视角灵敏度',
+        'DM_LOOK_INVERT_Y': '上下反转视角',
         'DM_RUMBLE': '手柄震动',
         'DM_RUMBLE_GAIN': '震动强度',
         'DM_RUMBLE_MIN': '震动阈值',
@@ -237,14 +248,17 @@ def settings_rows_zh(nx):   # by variable, not by the whole line: nxnative's cap
         'DM_NVN_TEX_FLOOR': '纹理质量',
         'DM_FAST_720': '快速模式',
         'DM_FULL_DOCKED': '完整底座画面',
+        'DM_MIC_GAIN': '麦克风灵敏度',
     }
     notes = {
+        'DM_FPS_TARGET': '60 帧更流畅；30 帧更省电。',
         'DM_FRAMEGEN': '游戏每秒绘制 30 帧，MetalFX 在每两帧之间生成一帧，因此屏幕显示 60 帧。它比真实 60 帧更省性能和发热，但输入延迟更高；快速运动可能出现拖影。',
         'DM_DYNAMIC_RESOLUTION': '让游戏在高负载时自动降低分辨率；关闭后保持所选主机模式的完整分辨率。',
         'DM_WIDE_VIEW': '以 iPhone 屏幕自身的比例铺满画面（约 19.5:9），视野更宽且没有黑边；3D 摄像机和界面会随屏幕形状调整，不会拉伸。渲染像素约增加五分之一，因此会稍慢、稍热。下一次启动游戏时生效。iPhone 默认开启；iPad 保持 16:9。',
         'DM_PRESENT_UPSCALE': '会使用更多 GPU 时间，可能增加发热。',
         'DM_OVERLAY': '游戏中按 1 键循环切换：紧凑（帧率 + 分辨率）→ 详细（图表、GPU、帧时间、CPU、内存）→ 关闭。',
         'DM_MIC': '让需要听声音的游戏能够听到你，例如通过哼唱或吹口哨来演奏时之笛。系统只会询问一次麦克风权限；在 iPhone 上，游戏声音会通过同时录音的音频会话播放。推荐开启以使用语音演奏时之笛。',
+        'DM_MIC_GAIN': '提高较轻微的麦克风输入；过高时也会更容易收入环境声。',
         'DM_MIC_BOOST': '提高房间里较轻微、但仍能被识别出的哼唱和口哨声。高灵敏度还能听到更轻的音符，但也会收入更多环境声和游戏自身声音；关闭时把原始麦克风输入交给游戏。',
         'DM_SW2': '通过蓝牙使用 Joy-Con 2 和 Pro Controller 2：游戏中按住手柄上的 Sync 键配对。macOS 会请求一次蓝牙权限。',
         'DM_PRESENT_SNAP': '最多增加一帧显示延迟。',
@@ -296,6 +310,34 @@ def game_marks_zh(nx):   # the render-scale preset name lives in each game profi
         t = s.replace('0.25=Ultra Potato Mode 🥔', '0.25=超低画质模式 🥔')
         if t != s:
             path.write_text(t); print(f'  {path.parent.name}/game.tsv: Chinese render-scale mark')
+
+
+def pokopia_language_zh(nx):   # Pokopia's generated control data lists only English; expose the game's language choices and default to Chinese
+    path = nx.parent / 'nxs2.py'
+    if not path.is_file(): return
+    s = path.read_text()
+    if '(switch2mac) Pokopia\'s generated control lists only English' in s: return
+    old = ("    run([PY, NX / 'dm/games/settings.py', TITLE, b.patched, b.extract / 'control.nacp', settings], b.logs / 'settings.log',\n"
+           "        env=b.env(GFXAPI='nvn', SETTINGS_PLATFORM='mac', DM_LANG='en-US'))\n")
+    new = ("    run([PY, NX / 'dm/games/settings.py', TITLE, b.patched, b.extract / 'control.nacp', settings], b.logs / 'settings.log',\n"
+           "        env=b.env(GFXAPI='nvn', SETTINGS_PLATFORM='mac', DM_LANG='zh-Hans'))\n"
+           "    # (switch2mac) Pokopia's generated control lists only English, so settings.py omits\n"
+           "    # DM_LANG. The game itself has the standard language list; expose it and default to Chinese.\n"
+           "    data = json.loads(settings.read_text())\n"
+           "    if not any(s.get('env') == 'DM_LANG' for s in data['settings']):\n"
+           "        lang = {'env': 'DM_LANG', 'kind': 'choice', 'section': 'Game', 'label': '游戏语言',\n"
+           "                'default': 'zh-Hans', 'level': 'basic',\n"
+           "                'options': [['zh-Hans', '简体中文'], ['zh-Hant', '繁体中文'],\n"
+           "                            ['en-US', '美式英语'], ['ja', '日语'], ['ko', '韩语'],\n"
+           "                            ['fr', '法语'], ['de', '德语'], ['es', '西班牙语'],\n"
+           "                            ['it', '意大利语'], ['pt', '葡萄牙语'], ['ru', '俄语']]}\n"
+           "        at = next((i + 1 for i, s in enumerate(data['settings']) if s.get('env') == 'DM_OPMODE'), 0)\n"
+           "        data['settings'].insert(at, lang)\n"
+           "        settings.write_text(json.dumps(data, indent=1, ensure_ascii=False) + '\\n')\n")
+    if old in s:
+        s = s.replace(old, new, 1)
+        s = s.replace("'--lang', 'en-US', '--sign'", "'--lang', 'zh-Hans', '--sign'", 1)
+        path.write_text(s); print('  nxs2.py: Pokopia language list and default Simplified Chinese')
 
 
 if __name__ == '__main__':

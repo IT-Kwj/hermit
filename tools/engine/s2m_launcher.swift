@@ -5,6 +5,7 @@
 // writes too), launcher.c's handling of 0 / 1 / 2, "hold Option at launch" when the window is switched off. Play (Return) starts the game; the X (Esc, ⌘Q) quits
 // without it. The window never takes focus by itself: an app opened in the background (open -g) keeps it behind until the player switches to it
 import AppKit
+import AVFAudio
 import CoreText
 import QuartzCore
 import SwiftUI
@@ -393,6 +394,23 @@ enum LauncherWindowLayout {   // nxnative's (dm/ios/tests/launcher_layout_check.
 }
 
 // 1: Play (the window's settings are in the environment), 0: the player quit, 2: no window (no launcher.json, or "Show before playing" off): launcher.c applies the saved choices
+@_cdecl("dm_mac_microphone_consent")
+public func dmMacMicrophoneConsent() -> Int32 {
+    switch AVAudioApplication.shared.recordPermission {
+    case .granted: return 1
+    case .denied: return 0
+    default:
+        let done = DispatchSemaphore(value: 0)
+        var allowed = false
+        AVAudioApplication.requestRecordPermission { granted in
+            allowed = granted
+            done.signal()
+        }
+        done.wait()
+        return allowed ? 1 : 0
+    }
+}
+
 @_cdecl("dm_mac_launcher")
 public func dmMacLauncher() -> Int32 {
     guard let url = Bundle.main.resourceURL?.appendingPathComponent("dm/launcher.json"), let data = try? Data(contentsOf: url) else { return 2 }
