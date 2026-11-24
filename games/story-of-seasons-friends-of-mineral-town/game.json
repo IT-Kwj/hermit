@@ -1,0 +1,27 @@
+{
+ "title_id": "0100ED400EEC2000",
+ "name": "STORY OF SEASONS: Friends of Mineral Town",
+ "version": "1.0.5",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v327680"
+   ],
+   "version_names": {
+    "v327680": "1.0.5"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "1f64cee742e20e719db500313ad6cc53d4b764e5"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.5) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
