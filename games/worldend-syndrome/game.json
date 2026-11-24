@@ -1,0 +1,46 @@
+{
+ "title_id": "010048900CF64000",
+ "name": "WORLDEND SYNDROME",
+ "version": "1.0.0",
+ "console": "switch",
+ "builds": [
+  {
+   "id": "macnativegames",
+   "name": "MacNativeGames",
+   "engine": {
+    "kind": "macnativegames",
+    "repo": "https://github.com/ly05010419/MacNativeGames",
+    "commit": "51202d4e1887f51e2e5c6631271240d9efc80487",
+    "builder": {
+     "script": "games/worldend/build.py",
+     "cwd": "games/worldend",
+     "pip": [
+      "lz4==4.4.5",
+      "capstone==5.0.6",
+      "fonttools==4.60.1"
+     ],
+     "args": [
+      "{base}",
+      "-k",
+      "{keys}",
+      "-o",
+      "{app}",
+      "--work",
+      "{work}/Worldend_build"
+     ]
+    }
+   },
+   "watch": [
+    "games/worldend"
+   ],
+   "about": "ly05010419's MacNativeGames (MIT), its worldend port: Community port, experimental. The title, the story scenes, name entry and the first choice were played by its contributor, up to the end of the first loop; not every route. Base game 1.0.0 (.nsp or .xci) only. Needs Xcode with the macOS 26 SDK. Not built through Hermit yet.",
+   "plays": "the base game 1.0.0 only (no update)",
+   "update_versions": [],
+   "no_update": true,
+   "app_ids": [
+    "org.macnativegames.worldend"
+   ]
+  }
+ ],
+ "disk_gb": 20
+}

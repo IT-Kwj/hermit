@@ -1,0 +1,116 @@
+{
+ "title_id": "010051F0207B2000",
+ "name": "Tomodachi Life: Living the Dream",
+ "version": "1.0.0",
+ "console": "switch",
+ "builds": [
+  {
+   "id": "macnativegames",
+   "name": "MacNativeGames",
+   "engine": {
+    "kind": "macnativegames",
+    "repo": "https://github.com/ly05010419/MacNativeGames",
+    "commit": "036267eb21fab75b6e32b558cc64f91f3167b0b3",
+    "builder": {
+     "cwd": "games/tomodachi",
+     "pip": [
+      "capstone==5.0.9",
+      "cryptography==50.0.2",
+      "lz4==4.4.5"
+     ],
+     "needs": [
+      "firmware"
+     ],
+     "fresh": [
+      "{work}/Tomodachi_build/shared-fonts",
+      "{work}/Tomodachi_build/host"
+     ],
+     "steps": [
+      {
+       "stage": "game code",
+       "what": "the game's code and data",
+       "cmd": [
+        "{py}",
+        "prepare.py",
+        "{base}",
+        "--keys",
+        "{keys}",
+        "--work",
+        "{work}/Tomodachi_build/prepared",
+        "--romfs",
+        "--resume"
+       ]
+      },
+      {
+       "stage": "game data",
+       "what": "the Switch's system fonts",
+       "cmd": [
+        "{py}",
+        "tools/extract_shared_fonts.py",
+        "--keys",
+        "{keys}",
+        "--firmware",
+        "{firmware}",
+        "--output",
+        "{work}/Tomodachi_build/shared-fonts"
+       ]
+      },
+      {
+       "stage": "startup shaders",
+       "what": "the runtime (SPIRV-Cross from MacNativeGames' pinned tools, made once)",
+       "cmd": [
+        "/bin/sh",
+        "-c",
+        "x=$(\"$0\" ../../tools/deps program spirv-cross) && exec \"$0\" build_host.py --prepared \"$1\" --work \"$2\" --shared-fonts \"$3\" --spirv-cross \"$x\" --backend metal4",
+        "{py}",
+        "{work}/Tomodachi_build/prepared",
+        "{work}/Tomodachi_build/host",
+        "{work}/Tomodachi_build/shared-fonts"
+       ]
+      },
+      {
+       "stage": "the app",
+       "what": "Tomodachi Life - Living the Dream.app",
+       "cmd": [
+        "{py}",
+        "package.py",
+        "--work",
+        "{work}/Tomodachi_build/host",
+        "--backend",
+        "metal4",
+        "--output",
+        "{app}",
+        "--replace"
+       ]
+      },
+      {
+       "stage": "the app",
+       "what": "the app finds its game data wherever it is moved",
+       "cmd": [
+        "/bin/sh",
+        "-c",
+        "r=\"$0/Contents/Resources\" && printf \"%s%s\\n\" \"$1\" \"${2#/}\" > \"$r/host-path.txt\" && printf \"%s%s\\n\" \"$1\" \"${3#/}\" > \"$r/romfs-path.txt\" && codesign --force --sign - \"$0\" && codesign --verify --strict \"$0\"",
+        "{app}",
+        "../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../",
+        "{work}/Tomodachi_build/host",
+        "{work}/Tomodachi_build/prepared/romfs"
+       ]
+      }
+     ]
+    }
+   },
+   "watch": [
+    "games/tomodachi"
+   ],
+   "about": "ly05010419's MacNativeGames (MIT), its tomodachi port: Community port, experimental. Its contributor played the start, the menus, text entry and an existing island; photos can hit an unsupported shader, and long sessions and saves are not checked yet: keep a backup of your saves. Base game 1.0.0 (.nsp or .xci) and your firmware for the system fonts. The app reads the game's data from this build's work folder, so keep that folder. Not built through Hermit yet.",
+   "plays": "the base game 1.0.0 only (no update)",
+   "update_versions": [],
+   "no_update": true,
+   "firmware": "always",
+   "app_ids": [
+    "org.macnativegames.tomodachi"
+   ]
+  }
+ ],
+ "disk_gb": 30
+}
