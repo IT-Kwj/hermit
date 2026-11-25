@@ -1,0 +1,25 @@
+{
+ "title_id": "0100BC60099FE000",
+ "name": "Iconoclasts",
+ "version": "1.15p",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v65536"
+   ],
+   "version_names": {},
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "168e9e78056fbaf81480c49c0caa1fe0275399ef"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.15p) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
