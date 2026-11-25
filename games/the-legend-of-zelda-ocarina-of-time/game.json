@@ -59,6 +59,27 @@
    "versions": [
     "v131072"
    ]
+  },
+  {
+   "id": "macnativegames",
+   "name": "MacNativeGames",
+   "engine": {
+    "kind": "macnativegames",
+    "repo": "https://github.com/ly05010419/MacNativeGames",
+    "commit": "3b0eae42f4924775056ccd74df35245ef13ef586"
+   },
+   "watch": [
+    "games/oot",
+    "build_app.py",
+    "tools"
+   ],
+   "about": "ly05010419's MacNativeGames (MIT): its own Ocarina of Time port on its own runtime and Metal 4 renderer, not nxnative. Its author plays it on an M4 from the title into Kokiri Forest and the village (about 81 fps at 720p, 65 at 1080p standing in the village), not through the whole game. Its own settings on key 1 (Hermit's overlay and key-2 settings are not added): resolution and upscaler (MetalFX or the game's own) while it runs, handheld or docked quality, a frame lock (30 by default, up to 120) and MetalFX frame interpolation. Builds from a .nup or a dump folder (base/ and updates/131072/), without keys; needs Homebrew's python@3.14 and Xcode with its Metal toolchain, about 40 GB free and half an hour. Not built through Hermit yet.",
+   "versions": [
+    "v131072"
+   ],
+   "app_ids": [
+    "org.macnativegames.oot"
+   ]
   }
  ],
  "choose": [
