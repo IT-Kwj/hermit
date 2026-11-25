@@ -10,7 +10,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "51202d4e1887f51e2e5c6631271240d9efc80487",
+    "commit": "52c76a72d2283bfeb42333c1386582173f22f8f1",
     "builder": {
      "script": "games/worldend/build.py",
      "cwd": "games/worldend",
