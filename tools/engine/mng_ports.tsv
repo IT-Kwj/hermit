@@ -7,7 +7,7 @@ aoc	later	Hyrule Warriors: Age of Calamity 1.3.0. Experimental community port (s
 aocx	no	Age of Calamity 1.4.1 rewritten on the Zelda runtime: reaches the first battle, no Mac app yet.
 botw	no	Breath of the Wild's lists only: the game builds with games/totk's runtime and build_app.py (Hermit's Breath of the Wild build watches games/totk).
 by3	later	Bayonetta 3. Work in progress; patch scripts only, no app builder yet.
-dkb	later	Donkey Kong Bananza (Switch 2), built by build_app.py from a .nup or dump folder, as Ocarina of Time's port is (hermit.py takes Switch 2 dumps for MacNativeGames since bc025a3). A second build for games/donkey-kong-bananza.
+dkb	later	Donkey Kong Bananza (Switch 2), built by build_app.py from a .nup or dump folder, as Ocarina of Time's port is (hermit.py takes Switch 2 dumps for MacNativeGames since Ocarina of Time's build). A second build for games/donkey-kong-bananza.
 eow	later	The Legend of Zelda: Echoes of Wisdom. Community port, early, with a Mac app (build.py; MNG Launcher builds it). A second build for its game here.
 jamboree	later	Super Mario Party Jamboree. Experimental community port (scripts/build_jamboree.py). A second build for its game here.
 la	later	The Legend of Zelda: Link's Awakening. Experimental community port (scripts/build_la.py, package_la.py). A second build for its game here.

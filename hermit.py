@@ -1515,7 +1515,26 @@ def run_game(a):
     sys.exit(p.wait())
 
 
+def follow_rewritten_main():
+    """main's history was rewritten once (its files unchanged, only commit IDs), which the app's fast-forward update can't
+    follow. A copy on main with no edits whose commit is no longer on origin/main moves to the commit there holding exactly
+    its files (git reset --keep: no file changes), so the app's next update is a fast-forward again. Anything else is left alone."""
+    git = lambda *x: subprocess.run(['git', '-C', str(ROOT), *x], capture_output=True, text=True, timeout=60)
+    try:
+        if not (ROOT / '.git').exists() or git('rev-parse', '--abbrev-ref', 'HEAD').stdout.strip() != 'main': return
+        if git('rev-parse', '-q', '--verify', 'origin/main^{commit}').returncode: return
+        if git('merge-base', '--is-ancestor', 'HEAD', 'origin/main').returncode == 0: return   # the usual case
+        if git('status', '--porcelain', '--untracked-files=no').stdout.strip(): return   # edited files: someone works in it
+        tree = git('rev-parse', 'HEAD^{tree}').stdout.strip()
+        for line in git('log', '--format=%H %T', '-n', '3000', 'origin/main').stdout.splitlines():
+            c, t = line.split()
+            if t == tree:
+                git('reset', '-q', '--keep', c); return
+    except Exception: pass
+
+
 def main():
+    follow_rewritten_main()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--work', default=str(ROOT / 'work'), help='build folder (default ./work)')
     sub = ap.add_subparsers(dest='cmd', required=True)
