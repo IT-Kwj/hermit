@@ -30,7 +30,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "889ffd6c76d5ab9387f1e63b0b786c4479aa5805"
+    "commit": "5dcd1f19336d67f6c3419d87234cfafa648a3031"
    },
    "shader_list": "shader_list.tsv",
    "about": "Upstream nxnative with Hermit's overlay and key-2 settings: nxnative's own Ocarina of Time profile, kept up to date with its main branch.",

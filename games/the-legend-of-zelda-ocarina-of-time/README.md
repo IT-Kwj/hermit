@@ -1,12 +1,12 @@
 # The Legend of Zelda: Ocarina of Time
 
-Title ID `0400486024DEC000`, update v131072. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/889ffd6c76d5ab9387f1e63b0b786c4479aa5805/dm/games/0400486024DEC000) for how far it plays and on which Mac.
+Title ID `0400486024DEC000`, update v131072. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/5dcd1f19336d67f6c3419d87234cfafa648a3031/dm/games/0400486024DEC000) for how far it plays and on which Mac.
 
 Built with nxnative's own builder at the commit `game.json` names (fetched once into `./engines`), with Hermit's front end added (`tools/engine/patch.py`): the game starts at once, **key 1** is the performance overlay and **key 2** the settings.
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/0400486024DEC000`](https://github.com/seedds/nxnative/tree/889ffd6c76d5ab9387f1e63b0b786c4479aa5805/dm/games/0400486024DEC000) |
+| Profile and notes | [nxnative `dm/games/0400486024DEC000`](https://github.com/seedds/nxnative/tree/5dcd1f19336d67f6c3419d87234cfafa648a3031/dm/games/0400486024DEC000) |
 | Dump folder | `base/` and `updates/131072/` |
 
 ## Shared shader list
