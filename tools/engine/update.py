@@ -13,6 +13,8 @@
 
   tools/engine/update.py --new-games        also add the Switch 2 games nxnative has a profile for and Hermit has no folder for yet (with --apply: a folder each,
                                             made from nxnative's profile: game.json, a page that links its notes, an empty shader list and reports table, a README row)
+  tools/engine/update.py --ports [--issue]  also list MacNativeGames' ports (its games/<folder>) that no build here uses and tools/engine/mng_ports.tsv does not
+                                            record; --issue opens one issue on this repository for each (once). Never added by itself: a port needs a build entry
   --check   only say whether anything is due (for the GitHub workflow: writes changed=true/false to $GITHUB_OUTPUT)
   --ci      on GitHub: commit on the branch checked out (main) instead of requiring dev
 
@@ -169,6 +171,62 @@ def new_games():   # [(title ID, name, version, newest commit of its profile)]: 
     return out
 
 
+MNG_REPO = 'ly05010419/MacNativeGames'
+MNG_PORTS = ROOT / 'tools/engine/mng_ports.tsv'
+
+
+def mng_ports():   # [(folder, name, title ID or '')]: MacNativeGames' ports (its games/<folder>) that no Hermit build uses and mng_ports.tsv does not record
+    """A port is used when a macnativegames build's "watch", builder script or cwd names its folder. mng_ports.tsv records the others, each with why
+    it is not a build yet, so only a port MacNativeGames adds later is reported. Its name and title ID come from the port's own game.json
+    (MacNativeGames' manifest, schema 1) when it has one, else from its README (the first heading, the first title ID in it)."""
+    import base64, urllib.error
+    used = set()
+    for g in games():
+        e = g['engine']
+        if e['kind'] != 'macnativegames': continue
+        for p in list(g.get('watch', [])) + [e.get('builder', {}).get('script', ''), e.get('builder', {}).get('cwd', '')]:
+            m = re.match(r'games/([^/]+)', p or '')
+            if m: used.add(m[1])
+    known = {l.split('\t')[0] for l in MNG_PORTS.read_text(encoding='utf-8').splitlines() if l and not l.startswith('#')} if MNG_PORTS.is_file() else set()
+    out = []
+    for item in api(f'repos/{MNG_REPO}/contents/games'):
+        x = item['name']
+        if item['type'] != 'dir' or x in used or x in known: continue
+        name, tid = x, ''
+        for f in ('game.json', 'README.md'):
+            try: t = base64.b64decode(api(f'repos/{MNG_REPO}/contents/games/{x}/{f}')['content']).decode('utf-8', 'replace')
+            except urllib.error.HTTPError as err:
+                if err.code != 404: raise
+                continue
+            if f == 'game.json':
+                try: j = json.loads(t); name, tid = j.get('name') or name, (j.get('title_id') or '').upper()
+                except ValueError: pass
+            else:
+                h = next((l.lstrip('# ').strip() for l in t.splitlines() if l.startswith('# ')), '')
+                if name == x and h: name = h
+                if not tid: tid = (re.search(r'\b(0[14][0-9A-Fa-f]{14})\b', t) or [None, ''])[1].upper()
+            if tid and name != x: break
+        out.append((x, name.split(' — ')[0].strip() or x, tid))   # "Mario Kart 8 Deluxe — native macOS target": the game's name
+    return out
+
+
+def report_port(folder, name, tid):   # one issue on this repository per new port (never twice: an issue of any state whose title names the folder stops it)
+    repo = os.environ.get('GITHUB_REPOSITORY', 'azmasm/hermit')
+    title = f'New MacNativeGames port: {name} (games/{folder})'
+    r = subprocess.run(['gh', 'issue', 'list', '--repo', repo, '--state', 'all', '--search', f'"games/{folder}" in:title', '--json', 'title'], capture_output=True, text=True)
+    if r.returncode != 0: say(f'  could not look for an issue about it ({r.stderr.strip()[:120]})'); return
+    if any(f'(games/{folder})' in i['title'] for i in json.loads(r.stdout or '[]')): say('  already reported'); return
+    have = next((p.parent.name for p in (ROOT / 'games').glob('*/game.json') if tid and json.loads(p.read_text())['title_id'].upper() == tid), None)
+    body = (f'MacNativeGames has a port Hermit has no build for: [games/{folder}](https://github.com/{MNG_REPO}/tree/main/games/{folder})'
+            + (f', title ID `{tid}`' if tid else '') + '.\n\n'
+            + (f'Hermit already has this game ([games/{have}](https://github.com/{repo}/tree/main/games/{have})), so it would be a further build there.' if have else 'Hermit has no folder for this game yet.')
+            + '\n\nTo add it: a `macnativegames` build in that game\'s `game.json` that runs the port\'s builder as its README says (see the other MacNativeGames builds), '
+            + 'then close this issue. Not adding it: a line in `tools/engine/mng_ports.tsv` with why, then close this issue.\n\n'
+            + '_Opened by `tools/engine/update.py --ports` (the Update builds workflow)._')
+    r = subprocess.run(['gh', 'issue', 'create', '--repo', repo, '--title', title, '--body', body], capture_output=True, text=True)
+    say(f'  reported: {r.stdout.strip()}' if r.returncode == 0 else f'  could not open an issue ({r.stderr.strip()[:120]})')
+
+
 def add_game(tid, name, version, sha):
     """A game nxnative has a profile for, as a folder like Donkey Kong Bananza's: game.json, a page pointing at nxnative's notes (nothing is
     copied from them), an empty shared shader list and reports table, and its rows in the README's two tables."""
@@ -308,6 +366,13 @@ def main():
             subprocess.run(['git', '-C', str(ROOT), 'commit', '-q', '-m', f'New game: {name} (nxnative {sha[:12]})\n\nnxnative added its profile ({subj}); Hermit builds it with nxnative\'s builder and its front end (tools/engine/update.py --new-games).\n{sign}'],
                            env=dict(os.environ, TZ='UTC'), check=True)
             say(f'  added: {git("-C", str(ROOT), "log", "--oneline", "-1")}')
+    if '--ports' in sys.argv:   # reported, never added by itself: each port needs a build entry made from its README (and does not set changed: the Mac job has nothing to do for it)
+        try: ports = mng_ports()
+        except Exception as x: say(f'new ports: could not check MacNativeGames ({x})'); ports = []
+        for folder, name, tid in ports:
+            say(f'new port in MacNativeGames: {name} (games/{folder}' + (f', {tid}' if tid else '') + '): no build here yet, and tools/engine/mng_ports.tsv does not record it')
+            if '--issue' in sys.argv: report_port(folder, name, tid)
+        if not ports: say('new ports: none (every MacNativeGames port is a build here or recorded in tools/engine/mng_ports.tsv)')
     if not changed: say('all builds up to date, no new games')
     if os.environ.get('GITHUB_OUTPUT'):
         with open(os.environ['GITHUB_OUTPUT'], 'a') as f: f.write(f'changed={"true" if changed else "false"}\n')

@@ -2,6 +2,8 @@
 #
 # Every 5 minutes (GitHub's shortest) a small Linux job asks GitHub whether any game's engine (hermit-builds, nxnative, pokopia-native) has a newer
 # commit for it, or whether nxnative has a Switch 2 profile Hermit has no folder for yet (tools/engine/update.py --check --new-games).
+# It also opens one issue for each port MacNativeGames adds that no build here uses and tools/engine/mng_ports.tsv does not record (--ports --issue):
+# a port needs a build entry made from its README, so it is never added by itself.
 # Only when something is due, a Mac job fetches it, re-applies Hermit's overlay and settings, compiles the game's runtime as a check,
 # and commits each game that passes to main. A game that does not fit or does not compile stays where it was (the job's log says why).
 # Players' apps pull main when they open, so they get the update without a new app release. Run it by hand from the Actions tab too.
@@ -14,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  issues: write   # the check job opens one issue for each new MacNativeGames port (update.py --ports --issue)
 
 concurrency:
   group: update-builds
@@ -29,7 +32,7 @@ jobs:
       - id: check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 tools/engine/update.py --new-games --check
+        run: python3 tools/engine/update.py --new-games --check --ports --issue
 
   update:
     needs: check
