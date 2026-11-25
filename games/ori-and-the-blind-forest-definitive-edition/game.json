@@ -10,7 +10,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "52c76a72d2283bfeb42333c1386582173f22f8f1",
+    "commit": "d6873a48c07b4abdad102554ae845883c8bc7083",
     "builder": {
      "script": "games/ori/scripts/build_ori.py",
      "args": [
