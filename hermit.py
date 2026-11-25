@@ -670,7 +670,12 @@ def builder_titles(paths):   # the title IDs inside Switch files whose names do 
             import build_ipa_from_nsp as nb
             say(f'reading which game {len(want)} file(s) are, with nxnative\'s reader and your keys (once)')
             nx = next((x for x in sorted(tool.glob('**/nx_extract')) if x.is_file() and os.access(x, os.X_OK)), None) if tool.is_dir() else None
-            if not nx: tool.mkdir(parents=True, exist_ok=True); nx = Path(nb.build_nx_extract(d, tool, tool / 'logs', env()))
+            if not nx:
+                native = d / 'dm/tools/nx_extract_bin/nx_extract'
+                if native.is_file() and os.access(native, os.X_OK): nx = native   # newer nxnative commits carry the native tool
+                elif hasattr(nb, 'build_nx_extract'):
+                    tool.mkdir(parents=True, exist_ok=True); nx = Path(nb.build_nx_extract(d, tool, tool / 'logs', env()))
+                else: raise RuntimeError(f'{d.name}: neither dm/tools/nx_extract_bin/nx_extract nor build_nx_extract() exists')
             for p in want:
                 r = subprocess.run([str(nx), str(Path(KEYS).expanduser().resolve()), '--contents', str(p)], capture_output=True, text=True, env=env())
                 got[p] = [(t, int(i, 16), int(v)) for t, i, v in re.findall(r'^content (\w+) ([0-9a-f]{16}) (\d+)$', r.stdout + r.stderr, re.M)] or 'unreadable'
@@ -1005,6 +1010,11 @@ def engine_build(a, tid, w, e):   # a game on another engine: its own builder do
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 run(['sips', '-s', 'format', 'jpeg', '-z', '256', '256', icon, '--out', dest], env=e)
                 print(f'  icon: {dest} (this builder reads it from the extraction)')
+        cheat_args = []
+        if getattr(a, 'cheats', None):
+            cheat = Path(a.cheats).expanduser().resolve()
+            if not cheat.is_file(): sys.exit(f'--cheats: no such file: {cheat}')
+            cheat_args = ['--cheats', cheat]
         s1 = []
         if DUMP_S1:   # nxnative's builder reads a folder of one game's files: links to this game's base, update and DLC only (its folder may hold other games)
             base, upd, dlc = s1_parts(DUMP_S1, tid)
@@ -1021,7 +1031,7 @@ def engine_build(a, tid, w, e):   # a game on another engine: its own builder do
             s1 = ['--title-id', tid]
         run([py(), nx / 'scripts/build_ipa_from_nsp.py', dump, '--platform', 'mac-app', '--allow-other-metal', '--env-file', sw,
              '--work-dir', w / tid, '-o', app, '--progress', 'json' if P.json else 'lines'] + (['-k', Path(a.keys).expanduser().resolve()] if DUMP_S1 else [])
-            + (['--seen-shaders'] if getattr(a, 'quick', False) else []) + icon_args + lang_args + s1
+            + (['--seen-shaders'] if getattr(a, 'quick', False) else []) + icon_args + cheat_args + lang_args + s1
             + eng.get('args', []), env=e, cwd=nx, shift=P.k if P.json else None)
     elif eng['kind'] == 'macnativegames':   # MacNativeGames (ly05010419, MIT): its own runtime and builder (build_app.py) for Tears of the Kingdom and Breath of the Wild
         if not DUMP_S1: sys.exit(f'{g["name"]}: MacNativeGames builds from the game\'s .xci / .nsp files with your prod.keys')
@@ -1508,7 +1518,7 @@ def main():
     dp = sub.add_parser('identify'); dp.add_argument('dump'); dp.add_argument('--firmware', help='your unpacked firmware dump (else the one beside your prod.keys is looked for)')
     bp.add_argument('--firmware', help='MacNativeGames builds from an .nsp (and Breath of the Wild): your unpacked firmware dump, for the system fonts')
     bp.add_argument('--shared-fonts', help='MacNativeGames: the six shared fonts an earlier Tears of the Kingdom build extracted, instead of --firmware')
-    bp.add_argument('--cheats', help='MacNativeGames: an Atmosphère cheat .txt for this game build (shown on the 金手指 page)')
+    bp.add_argument('--cheats', help='an Atmosphère cheat .txt for this game build: bundled in the Mac app and shown in its 金手指 window')
     for x in (bp, dp): x.add_argument('--keys', help='a Switch 1 game (.nsp / .nsz / .xci / .xcz): your own prod.keys, passed to the builder only (never copied or kept)')
     for x in (bp, dp):
         x.add_argument('--title-id', help='a Switch cartridge with several games (or files of several games): the one to build, its title ID')

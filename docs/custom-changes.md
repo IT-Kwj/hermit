@@ -2,7 +2,7 @@
 
 本文档记录在本机对 switch2mac 项目做的自定义修改。合并上游最新代码、或引擎被重新拉取后，按这里的说明恢复这些改动。
 
-更新时间：2026-11-23
+更新时间：2026-11-25
 
 ## 修改总览
 
@@ -13,6 +13,10 @@
 | poll 卡顿修复 | `tools/engine/patch.py`（`hle_net_poll()`） | 引擎 `hle_net.c` 的 poll 空等上限 100 ms | `build` 时 `patch.py` 自动应用 |
 | 麦克风授权兼容修复 | `tools/engine/s2m_launcher.swift` | 补齐 `launcher.c` 引用的 `dm_mac_microphone_consent`，避免 Mac App 链接失败 | `build` 时 `launcher_window()` 自动应用到引擎 |
 | 勇者斗恶龙 VII 中文与帧率 | `tools/engine/patch.py`、`builds/dq7/.../profile/.../game.tsv` | 中文 App 名称、默认简体中文、启动页与 2 面板的 30/60 帧选项 | 按 §2c 保留临时 profile 的 `fps_target 60`，构建时传 `--language zh-Hans --app-name "勇者斗恶龙 VII 重制版"` |
+| 龙珠 Sparking! ZERO | `builds/dbz`、`games/dragon-ball-sparking-zero` | 2.0.76 构建、中文启动页、自定义 logo、排除损坏 DLC | 按 §2e 使用完整本体/更新和可用 DLC；损坏包需重新下载 |
+| 丝之歌 | `builds/silksong`、`games/hollow-knight-silksong` | 1.0.30000 构建、中文启动页、自定义 logo | 按 §2f 使用基础 NSZ 和更新 NSZ，构建前需安装 `nsz` |
+| 通用 nxnative 金手指 | `hermit.py`、`tools/engine/patch.py` | `--cheats` 随 App 打包、自动加载，并汉化 Cheats 菜单/面板 | 构建时传 `--cheats <Atmosphère .txt>`；补丁在每次 `build` 时自动应用 |
+| 超级马力欧 奥德赛 1.4.1 | `builds/odyssey` | nxnative 构建、中文界面、自定义 logo、金手指 | 按 §2g 使用带 title ID 的输入副本；金手指必须匹配 `B424BE15…` |
 | 游戏图标（每次构建必做） | 源 logo → `builds/<游戏>/<tid>/extract/v<版本>/icon.jpg` | 自定义 App 图标，构建后必须验证非空白 | 构建前手动生成 `icon.jpg`，见 §3 |
 | 存档迁移 | 旧 `work/run/save/` → nxnative App 存档目录 | 恢复旧进度 | 手动复制 `account.sav` |
 
@@ -190,6 +194,263 @@ FPS 行没有加入，这是有意为之：Pokopia 使用游戏自身的固定 6
    0/154。
 4. 刷新后可直接把 `builds/pokopia/0400A3A01EE4C000/out/Pokemon Pokopia.app`
    移到 `/Applications`，保留 `extract/`、`shader/` 和 profile，供下一次继续刷新。
+
+### Shader 列表合并（2026-11-24）
+
+本机两份 Pokopia 贡献记录已合并进
+`games/pokemon-pokopia/shader_list.tsv`：
+
+- `shader-list-0400A3A01EE4C000-20261124-0120.txt`：129 条
+- `shader-list-contribution.txt`：406 条
+
+合并前逐条对照了当前 `pokopia-native-028deee1a825` 的 shader map，535 条全部有效；
+共享列表从 331 条增加到 866 条（S 316、C 26、R 524），没有重复。列表头也从旧引擎
+`9cb7f07a663f` 更新为当前引擎 `028deee1a825`。本次只更新共享列表，没有重新构建或
+替换已安装的 App；下一次构建会把 866 条全部写入 `pso_manifest.tsv`。
+
+## 2e. DRAGON BALL: Sparking! ZERO
+
+2026-11-25 完成 2.0.76（v327680）Mac 构建并安装：
+
+```text
+/Applications/DRAGON BALL - Sparking! ZERO.app
+```
+
+- Title ID：`010035F022078000`
+- 引擎：`nxnative@3d795fecbfef`
+- App 大小：约 8.9 GB
+- 构建缓存：`builds/dbz/010035F022078000`
+- 源文件：`/Users/amid031799/Downloads/Mac编译/LZ`
+- logo：`/Users/amid031799/Downloads/Mac编译/LZ/logo.png`
+- 14,842 个 Mac shader 全部编译成功
+- 管线归档：`applegpu_g15s`，约 381 MB
+- 启动页和 `2` 键面板已检查为中文；帧率提供 30 / 60 / 120 帧
+- 默认游戏语言保持 `en-US`，可在启动页选择简体中文
+
+构建输入在 `builds/dbz/input` 中使用同盘硬链接汇总，不占第二份游戏文件空间。
+DLC 逐个用 `nx_extract` 校验后，以下 index 可正常解包并已包含：
+
+```text
+2, 3, 4, 5, 8, 13, 14
+```
+
+以下 index 的源码 NSP 校验失败，已从构建输入排除，但原始下载文件保留：
+
+```text
+1, 6, 7, 9, 10, 11, 12
+```
+
+其中 index 1 是 Pre-Order Pack；6、7、9–12 也是损坏或不完整下载。以后需要这些
+DLC 时，应重新取得对应 NSP，放进 `builds/dbz/input` 后再构建；不要从
+`builds/dbz/rejected-dlc` 直接重新加入。
+
+安装后已通过 `codesign --verify --deep --strict`，并确认
+`Contents/Resources/AppIcon.icns` 存在且为 1024×1024。
+
+### 2.0.76 金手指
+
+2026-11-25 为当前 `2.0.76`、BID `68EDAFD68C7BC1A1` 增加中文标注的单人金手指：
+
+- 保留副本：`/Users/amid031799/Downloads/Mac编译/LZ/68EDAFD68C7BC1A1.txt`
+- 已安装到：`~/Library/Application Support/nxnative/010035F022078000/cheats/68EDAFD68C7BC1A1.txt`
+- 来源：[tomvita/MyNXCheats 的 2.0.76 release](https://github.com/tomvita/MyNXCheats/releases/tag/010035F022078000)
+- 原文件 SHA-256：`ddcd9835d561c5d992d224af5f10d60a9aa58b320f718b9cae6582257c5b0244`
+- 只汉化了条目名称，没有改动代码字
+- 当前 App 会直接读取上述 Application Support 目录，不需要重新构建或替换 App
+- 以后重新构建时，把 `--cheats "/Users/amid031799/Downloads/Mac编译/LZ/68EDAFD68C7BC1A1.txt"`
+  传给 `build`，即可随 App 打包
+
+`cheat_anchor.py` 对当前 NSO 校验时，7 个代码写入有 5 个与当前程序原有指令完全一致；
+“金钱 9000 万”使用跨模块指针链，锚定工具只处理 main，因此显示为仅限该构建，但原发布
+文件本来就是为这个 BID 提供。用户添加的 `2.0.73`、`2.0.74` 旧文件不能直接移植：
+`2.0.74` 的 16 个代码写入在当前版本中 0 个匹配，已明确排除，不能把旧地址用于 2.0.76。
+
+游戏内从“金手指 → 显示金手指窗口”打开，或按 `⌘⇧C`。P1/P2 的 HP、气、技能点和
+一击必杀需要先启用对应的“P1/P2 修改总开关”。这些修改只用于单人/离线模式；
+启用前应保留存档，并一次只测试一个条目。
+
+## 2f. Hollow Knight: Silksong
+
+2026-11-25 完成 1.0.30000（v655360）Mac 构建并安装：
+
+```text
+/Applications/Hollow Knight - Silksong.app
+```
+
+- Title ID：`010013C00E930000`
+- 引擎：`nxnative@fec8e1f26b42`
+- App 大小：约 6.6 GB
+- 构建缓存：`builds/silksong/010013C00E930000`
+- 源文件：`/Users/amid031799/Downloads/Mac编译/SZG`
+- logo：`/Users/amid031799/Downloads/Mac编译/SZG/logo.png`
+- 2,450 个 Mac shader 全部就绪
+- 管线归档：`applegpu_g15s`，约 22.7 MB
+- 启动页和 `2` 键面板已检查为中文
+- 游戏固定 60 FPS，过场动画由游戏切到 30 FPS，因此没有单独的“帧率”设置行
+- 默认游戏语言保持 `en-US`，可在启动页选择简体中文
+
+源文件是 NSZ，构建器需要 Python 包 `nsz`。本次已安装 `nsz==5.0.0` 并加入
+`requirements.txt`，以后运行 `./hermit.py setup` 会一并安装。
+
+安装后已通过 `codesign --verify --deep --strict`，并确认
+`Contents/Resources/AppIcon.icns` 存在且为 1024×1024。
+
+### 丝之歌金手指版
+
+2026-11-25 在 1.0.30000 普通版基础上完成金手指版并安装到
+`/Applications/Hollow Knight - Silksong.app`。
+
+原始金手指：
+
+```text
+/Users/amid031799/Downloads/Mac编译/SZG/FC9EA4CCC955D579.txt
+```
+
+打包副本：
+
+```text
+builds/silksong/cheats/FC9EA4CCC955D579.txt
+```
+
+当前 main 的真实 build ID 是
+`FC9EA4CCC955D5799F37752B2D730B31`。原文件的标题行写的是旧版本
+`1.0.29354 / 1D71738C36145136`，但 24 条“主代码”原指令与 1.0.30000 全部一致。
+打包副本已修正标题、移除无效的 `max shell`、把两个分组改成章节标题，并把
+`max rosary` / `max item` 改成中文 on / off 成对开关。
+
+构建命令：
+
+```bash
+./hermit.py --work builds/silksong build \
+  "/Users/amid031799/Downloads/Mac编译/SZG" \
+  --keys "/Users/amid031799/Downloads/Mac编译/prod.keys" \
+  --icon "/Users/amid031799/Downloads/Mac编译/SZG/logo.png" \
+  --cheats "/Users/amid031799/Documents/GitHub/switch2mac/builds/silksong/cheats/FC9EA4CCC955D579.txt"
+```
+
+`hermit.py` 把 `--cheats` 交给 nxnative 构建器；`tools/engine/patch.py` 会在引擎中：
+
+- 给 `pack_app.py` 增加 `--cheats`，把文件复制到 App 的 `Contents/Resources/cheats/`；
+- 给 `launcher.c` 增加金手指种子复制：首次启动把 App 内的 `.txt` / `.cheats.toml`
+  复制到 `~/Library/Application Support/nxnative/010013C00E930000/cheats/`，
+  再让 `DM_CHEATS` 指向这个可写目录；
+- 汉化上游 Cheats 菜单、窗口、按钮、提示和加载报告。
+
+当前整理版编译出 23 个有效条目，0 个被跳过。打开游戏菜单中的“金手指” →
+“显示金手指窗口”，或按 `⌘⇧C` 管理开关。安装后已通过严格签名检查，并确认
+`Resources/cheats/FC9EA4CCC955D579.txt` 存在。
+
+注意不要把 `.enabled`、`.values` 或 `.cheats-off-*` 写进 App 包：这些是运行时
+状态，写入 `Contents/Resources/cheats` 会破坏代码签名。启动器已经把它们全部
+放在 Application Support 下的可写 `cheats` 目录。
+
+已知组合限制：
+
+- `地图全开` 的代码洞穴与 `念珠数量最大` 重叠，不要同时开启。
+- `移动速度x1.5` / `移动速度x2` 只能选一个。
+- `伤害x2` / `伤害x4` / `一击必杀` 只能选一个。
+- `地图全开` 的锚点对未来版本偏弱；游戏更新后应先用 `cheat_anchor.py` 重新编译。
+
+## 2g. Super Mario Odyssey 1.4.1 + 金手指
+
+2026-11-25 完成《超级马力欧 奥德赛》1.4.1（v393216）nxnative 构建并安装：
+
+```text
+/Applications/Super Mario Odyssey.app
+```
+
+- Title ID：`0100000000010000`
+- main build ID：`B424BE150A8E7D78701CBE7A439D9EBF`
+- 引擎：`nxnative@82c354b0dec6`
+- App 大小：约 9.6 GB
+- 27,984 个 Mac shader 全部编译成功
+- 管线归档：`applegpu_g15s`，约 1.9 GB
+- 启动页和 `2` 键面板已检查为中文
+- 默认游戏语言保持 `en-US`
+
+源文件位于：
+
+```text
+/Users/amid031799/Downloads/Mac编译/ADS
+```
+
+其中 XCI 实际包含基础游戏与旧 1.4.0 更新，另外加入了 1.4.1 更新 NSZ。由于原文件没有
+title ID，构建前在 `builds/odyssey/input` 使用同盘硬链接整理了标准名称：
+
+```text
+Super Mario Odyssey [0100000000010000][v0].xci
+Super Mario Odyssey Update [0100000000010800][v393216].nsz
+```
+
+MacNativeGames 的 Odyssey 构建需要 Switch system firmware/shared fonts；本机没有，
+因此改用不需要 firmware 的 nxnative 构建。
+
+金手指使用：
+
+```text
+/Users/amid031799/Downloads/Mac编译/ADS/B424BE150A8E7D78.txt
+```
+
+文件名与当前 1.4.1 main build ID 一致；另一个 `3ca12dfaaf9c82da.txt` 属于不同 build，
+没有混入。金手指已随 App 放入 `Contents/Resources/cheats/`，启动器首次运行会把它复制到
+可写的 `~/Library/Application Support/nxnative/0100000000010000/cheats/`。
+Cheats 菜单、窗口、按钮和提示已汉化；游戏中从“金手指 → 显示金手指窗口”打开，
+也可以按 `⌘⇧C`。
+
+该文件的标题行仍写着旧的 `v1.3.0`，但文件名对应 `B424BE150A8E7D78`，构建器按当前
+1.4.1 build ID 选择它。以后若金手指更新，继续使用与
+`B424BE150A8E7D78701CBE7A439D9EBF` 匹配的文件。
+
+本次还补充了两项旧引擎兼容：
+
+- `hermit.py` 的未知文件名识别在新 nxnative 上优先使用
+  `dm/tools/nx_extract_bin/nx_extract`，旧引擎才调用 `build_nx_extract()`。
+- `tools/engine/patch.py` 同时支持 82c 旧 launcher/`mac_app()` 结构和新引擎结构，
+  并保持金手指种子文件与运行时状态目录分离。
+
+### 1.4.1 分卷压缩
+
+2026-11-25 将 `/Applications/Super Mario Odyssey.app` 分包到：
+
+```text
+/Users/amid031799/Downloads/Mac编译/Super Mario Odyssey upload
+```
+
+- `Super Mario Odyssey.z01`：3.0 GB
+- `Super Mario Odyssey.z02`：3.0 GB
+- `Super Mario Odyssey.zip`：2.3 GB
+- 上传目录合计约 8.3 GB
+- 使用 3 GiB 分卷和 ZIP64：`zip -y -fz -n .img -s 3g -r`
+- App 内 5.3 GB 的 `romfs.img` 原样存储，没有重新 deflate
+- `7zz t` 完整测试通过：3 个分卷、800 个文件、`Everything is Ok`
+- 又用 `zip -s 0` 合并并以 `ditto -x -k` 实际解压；恢复后的 App 为 9.6 GB，
+  三个相对符号链接（`romfs.img`、`msl`、`pso`）均保留，
+  `codesign --verify --deep --strict` 通过
+- `Super Mario Odyssey.sha256` 已生成，三个分卷逐项复核均为 `OK`
+- 已放入 `加微信进群获取免费更新，请备注mac原生游戏.png`
+- 已生成中文 `解压说明.txt`，命令行使用 `zip -s 0` 加 `ditto`；同时包含
+  Keka 图形界面步骤，并明确不要使用会丢失符号链接的在线解压或单独解压分卷
+
+不要用 `7zz` 直接解压此 App：它会把三个带 `../` 的相对符号链接视为危险路径而忽略，
+命令虽返回 2 但主文件已经写出，得到的 App 会缺少运行数据。`7zz` 只用于测试分卷完整性。
+
+### 1.4.1 外部文件清理
+
+2026-11-25 按用户要求删除 `/Users/amid031799/Downloads/Mac编译` 以外的全部奥德赛
+运行和构建文件：
+
+- `/Applications/Super Mario Odyssey.app`：约 9.6 GB
+- `builds/odyssey`：约 17 GB，含 App 构建和同盘输入链接
+- `~/Library/Application Support/nxnative/0100000000010000`：约 72 MB，
+  含存档、金手指状态、shader cache 和临时文件
+- `~/Library/Logs/nxnative/0100000000010000.log` 与
+  `0100000000010000.prev.log`
+
+保留 `Downloads/Mac编译/ADS`（XCI、1.4.1 更新 NSZ、金手指和 logo）以及
+`Downloads/Mac编译/Super Mario Odyssey upload`（分卷、SHA-256、说明和群图片）。
+清理过程中发现两个大型 ROM 曾被移到废纸篓；因为它们在要求保留的 `Mac编译` 范围内，
+已恢复到 `ADS`，并核对为 5.6 GB XCI 和 298 MB NSZ。项目里的
+`games/super-mario-odyssey` 属于支持信息，不是构建产物，保留。
 
 ## 3. 游戏图标（每次构建必做）
 
@@ -1016,6 +1277,9 @@ DM_FOCUS_KEEP=1
 
 #### 特殊版 `.app` 分卷打包固定规则
 
+- 以后每个上传文件夹都必须附带
+  `/Users/amid031799/Downloads/Mac编译/加微信进群获取免费更新，请备注mac原生游戏.png`。
+  原图为 820×1013 PNG；上传目录中使用同样的文件名，不要改名或重新压缩。
 - 以后所有 mac App 分卷继续使用 3 GiB：
   `zip -s 3g -r -y "<name>.zip" "<name>.app"`。`-y` 是必需项，不能省略；
   它让 ZIP 保存 App 内指向 Helpers bundle 的符号链接，而不是跟随链接把
@@ -1032,6 +1296,11 @@ DM_FOCUS_KEEP=1
   `cat *.z01 *.z02 *.z03 *.z04 *.z05 *.zip | bsdtar -xOf - > /dev/null`，
   再生成并复核 `.sha256`。`.app` 本身保留时，用
   `codesign --verify --deep --strict` 检查签名。
+- 如果 App 内有超过 4 GB 的单个 `.img`，必须启用 ZIP64 并让 `.img`
+  原样存储：`zip -q -y -fz -n .img -s 3g -r ...`。Apple 的 Info-ZIP
+  在拆分压缩超大 `.img` 时可能生成 CRC 错误的 deflate 流；这类分卷应直接用
+  `7zz t "<name>.zip"` 对分卷测试，不能依赖 `zip -s 0` 合并后再由
+  `unzip -t` 判断，因为 Apple 的合并实现也可能误报或破坏超大 Zip64 条目。
 - 上传目录的说明文件统一命名为 `解压说明.txt`，正文只用中文，不再使用
   英文说明文件。内容必须同时包含：
   1. macOS 终端里用 `zip -s 0` 合并分卷并按顺序解压的命令；

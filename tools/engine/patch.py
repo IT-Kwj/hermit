@@ -83,6 +83,204 @@ def main():
     pokopia_language_zh(nx)
     hle_net_poll(nx)
     no_lag_pso_batch(nx)
+    cheats_bundle(nx)
+    cheats_zh(nx)
+
+
+def cheats_bundle(nx):   # seed bundled cheats into Application Support so the signed app itself is never modified
+    launcher = nx / 'dm/mac/launcher.c'; original_launcher = launcher.read_text(); s = original_launcher
+    if '#include <dirent.h>' not in s:
+        anchor = '#include <CoreFoundation/CoreFoundation.h>\n'
+        if anchor not in s: sys.exit(f'{launcher}: no CoreFoundation include for bundled cheats')
+        s = s.replace(anchor, anchor + '#include <dirent.h>   // (switch2mac) seed bundled cheats\n', 1)
+    helper_anchor = 'static void mkdirs(const char *path) {   // mkdir -p\n'
+    helper = '''// (switch2mac) Copy bundled cheat definitions once into the writable Application Support folder.
+// The host stores .enabled/.values/.cheats-off files beside them, so DM_CHEATS must never point into the signed app.
+static void seed_cheats(const char *src, const char *dst) {
+    DIR *d = opendir(src); if (!d) return;
+    mkdir(dst, 0755);
+    for (struct dirent *e; (e = readdir(d));) {
+        const char *dot = strrchr(e->d_name, '.');
+        if (e->d_name[0] == '.' || !dot || (strcmp(dot, ".txt") && strcmp(dot, ".cheats.toml"))) continue;
+        char a[PATH_MAX], b[PATH_MAX];
+        int na = snprintf(a, sizeof a, "%s/%s", src, e->d_name), nb = snprintf(b, sizeof b, "%s/%s", dst, e->d_name);
+        if (na < 0 || (size_t)na >= sizeof a || nb < 0 || (size_t)nb >= sizeof b || access(b, F_OK) == 0) continue;
+        int fi = open(a, O_RDONLY), fo = open(b, O_WRONLY | O_CREAT | O_EXCL, 0644);
+        if (fi < 0 || fo < 0) { if (fi >= 0) close(fi); if (fo >= 0) close(fo); continue; }
+        char buf[65536]; ssize_t n; int ok = 1;
+        while ((n = read(fi, buf, sizeof buf)) > 0) if (write(fo, buf, (size_t)n) != n) { ok = 0; break; }
+        if (n < 0) ok = 0;
+        close(fi); if (close(fo) && ok) ok = 0;
+        if (!ok) unlink(b);
+    }
+    closedir(d);
+}
+
+'''
+    if 'static void seed_cheats(' not in s:
+        if helper_anchor not in s: sys.exit(f'{launcher}: no mkdirs anchor for bundled cheats')
+        s = s.replace(helper_anchor, helper + helper_anchor, 1)
+    olds = (
+        ('\n    setenv("DM_ROOT", sup, 0); setenv("DM_ROMFS", romfs, 0); setenv("DM_SAVE", save, 0); setenv("DM_TEMP", temp, 0);\n',
+         '\n    setenv("DM_ROOT", sup, 0); setenv("DM_ROMFS", romfs, 0); setenv("DM_SAVE", save, 0); setenv("DM_TEMP", temp, 0);\n'
+         '    snprintf(cheats, sizeof cheats, "%s/cheats", sup);   // (switch2mac) writable cheat state\n'
+         '    snprintf(p, sizeof p, "%s/cheats", res); seed_cheats(p, cheats); setenv("DM_CHEATS", cheats, 0);\n'),
+        ('\n    setenv("DM_ROOT", sup, 0); setenv("DM_ROMFS", romfs, 0); setenv("DM_TEMP", temp, 0);\n',
+         '\n    setenv("DM_ROOT", sup, 0); setenv("DM_ROMFS", romfs, 0); setenv("DM_TEMP", temp, 0);\n'
+         '    snprintf(cheats, sizeof cheats, "%s/cheats", sup);   // (switch2mac) writable cheat state\n'
+         '    snprintf(p, sizeof p, "%s/cheats", res); seed_cheats(p, cheats); setenv("DM_CHEATS", cheats, 0);\n'),
+    )
+    if 'seed_cheats(p, cheats)' not in s:
+        old, add = next(((a, b) for a, b in olds if a in s), (None, None))
+        if not old: sys.exit(f'{launcher}: no DM_ROOT line for bundled cheats')
+        s = s.replace(old, add, 1)
+    old_decl = '    char contents[PATH_MAX], res[PATH_MAX], host[PATH_MAX], dm[PATH_MAX], romfs[PATH_MAX], p[PATH_MAX];\n'
+    new_decl = '    char contents[PATH_MAX], res[PATH_MAX], host[PATH_MAX], dm[PATH_MAX], romfs[PATH_MAX], p[PATH_MAX], cheats[PATH_MAX];\n'
+    if 'cheats[PATH_MAX]' not in s:
+        if old_decl not in s: sys.exit(f'{launcher}: no path declarations for bundled cheats')
+        s = s.replace(old_decl, new_decl, 1)
+    if s != original_launcher and 'seed_cheats(p, cheats)' in s and 'static void seed_cheats(' in s:
+        launcher.write_text(s); print('  launcher.c: seed bundled cheats into Application Support')
+
+    pack = nx / 'dm/mac/pack_app.py'; s = pack.read_text()
+    if "add_argument('--cheats'" not in s:
+        anchor = "    ap.add_argument('--env-file', help='environment switches baked in (Resources/dm/env.txt)')\n"
+        if anchor not in s: sys.exit(f'{pack}: no --env-file argument for --cheats')
+        s = s.replace(anchor, anchor + "    ap.add_argument('--cheats', help='(switch2mac) an Atmosphère cheat .txt bundled as Resources/cheats/<build ID>.txt')\n", 1)
+        pack.write_text(s); print('  pack_app.py: --cheats argument')
+    s = pack.read_text()
+    old = "        for name in ('out', 'host', 'patched', 'romfs', 'msl', 'tables', 'font', 'aoc', 'pso', 'pso_pairs', 'env_file', 'settings', 'icon', 'html'):\n"
+    new = "        for name in ('out', 'host', 'patched', 'romfs', 'msl', 'tables', 'font', 'aoc', 'pso', 'pso_pairs', 'env_file', 'settings', 'icon', 'html', 'cheats'):\n"
+    if "'cheats')" not in s and old in s:
+        s = s.replace(old, new, 1); pack.write_text(s); print('  pack_app.py: resolve the cheats path')
+    s = pack.read_text()
+    anchor = "        mods, msls, pso, tables, pairs, fonts, files = selected_inputs(a)\n"
+    add = ("        if a.cheats:\n"
+           "            cheat = Path(a.cheats)\n"
+           "            if not cheat.is_file(): raise SystemExit(f'no cheat file at {cheat}')\n"
+           "            files.append(cheat)\n")
+    if 'cheat = Path(a.cheats)' not in s:
+        if anchor not in s: sys.exit(f'{pack}: no selected_inputs line for --cheats')
+        s = s.replace(anchor, anchor + add, 1); pack.write_text(s); print('  pack_app.py: cheats in the reuse key')
+    s = pack.read_text()
+    anchor = "    if a.settings: shutil.copyfile(a.settings, dm / 'launcher.json')\n"
+    add = ("    if a.cheats:\n"
+           "        step('cheats'); (res / 'cheats').mkdir(); shutil.copyfile(a.cheats, res / 'cheats' / Path(a.cheats).name)\n")
+    if "res / 'cheats'" not in s:
+        if anchor not in s: sys.exit(f'{pack}: no settings copy line for --cheats')
+        s = s.replace(anchor, anchor + add, 1); pack.write_text(s); print('  pack_app.py: copy cheats into the app')
+
+    build = nx / 'scripts/build_ipa_from_nsp.py'; s = build.read_text()
+    if 'def mac_app(' not in s: sys.exit(f'{build}: no mac_app for --cheats')
+    if not re.search(r'(?m)^def mac_app\([^\n]*cheats=None\):', s):
+        s, n = re.subn(r'(?m)^(def mac_app\([^\n]*?)(\):)$', r'\1, cheats=None\2', s, count=1)
+        if n != 1: sys.exit(f'{build}: mac_app signature not understood for --cheats')
+        build.write_text(s); print('  build_ipa_from_nsp.py: mac_app cheats parameter')
+    s = build.read_text()
+    anchor = "        if v: cmd += [opt, v]\n"
+    if "cmd += ['--cheats'" not in s:
+        if anchor not in s: sys.exit(f'{build}: no mac_app option loop for --cheats')
+        s = s.replace(anchor, anchor + "    if cheats: cmd += ['--cheats', Path(os.path.expanduser(cheats)).resolve()]\n", 1)
+        build.write_text(s); print('  build_ipa_from_nsp.py: pass cheats to pack_app')
+    s = build.read_text()
+    anchor = "    ap.add_argument('--env-file', help='environment switches for a diagnostic build (one KEY=VALUE per line)')\n"
+    if "add_argument('--cheats'" not in s:
+        if anchor not in s: sys.exit(f'{build}: no --env-file argument for --cheats')
+        s = s.replace(anchor, anchor + "    ap.add_argument('--cheats', help='(switch2mac) an Atmosphère cheat .txt bundled in the Mac app')\n", 1)
+        build.write_text(s); print('  build_ipa_from_nsp.py: --cheats argument')
+    s = build.read_text()
+    calls = (
+        ("                (args.gpu or PSO_GPUS).strip(), programs, control)\n",
+         "                (args.gpu or PSO_GPUS).strip(), programs, control, args.cheats)\n"),
+        ("                (args.gpu or PSO_GPUS).strip(), programs, control, PREBAKE if args.prebake is None else args.prebake)\n",
+         "                (args.gpu or PSO_GPUS).strip(), programs, control, PREBAKE if args.prebake is None else args.prebake, args.cheats)\n"),
+    )
+    for old, new in calls:
+        if old in s:
+            s = s.replace(old, new, 1); build.write_text(s); print('  build_ipa_from_nsp.py: pass args.cheats to mac_app'); break
+    else:
+        if not re.search(r'mac_app\([^;]*args\.cheats\)', s, re.S): print('  build_ipa_from_nsp.py: mac_app call does not take cheats')
+
+
+def cheats_zh(nx):   # the upstream Cheats window and load report, in Chinese
+    front = nx / 'dm/host/front_mac.m'; s = front.read_text(); n = 0
+    for old, new in (
+        ('@"Cheats"', '@"金手指"'),
+        ('@"Show Cheats Window"', '@"显示金手指窗口"'),
+        ('@"Cheats On"', '@"启用金手指"'),
+        ('@"Restore Saved Cheats (safe mode)"', '@"恢复已保存的金手指（安全模式）"'),
+        ('@"Cheats for %@ (another version of the game)"', '@"%@ 的金手指（游戏其他版本）"'),
+        ('@"No cheats for %@"', '@"%@ 没有可用金手指"'),
+        ('@"Reload cheats"', '@"重新加载金手指"'),
+        ('@"Open cheats folder"', '@"打开金手指文件夹"'),
+        ('@"Last run ended unexpectedly with cheats on: all are off."', '@"上次启用金手指后异常退出；本次全部关闭。"'),
+        ('@"Restore"', '@"恢复"'),
+        ('@"Select All"', '@"全选"'),
+        ('@"Deselect All"', '@"取消全选"'),
+        ('@"Search"', '@"搜索"'),
+        ('@"Open Folder"', '@"打开文件夹"'),
+        ('@"Reload"', '@"重新加载"'),
+        ('@"Find Cheats…"', '@"查找金手指…"'),
+        ('@"Report"', '@"报告"'),
+        ('@"Looking…"', '@"正在查找…"'),
+        ('@"Apply"', '@"应用"'),
+        ('@"Copy Command"', '@"复制命令"'),
+        ('@"Show what it writes now, and its note"', '@"显示当前将写入的内容和说明"'),
+        ('@"Details"', '@"详情"'),
+        ('@"Value (%s, %s)"', '@"数值（%s，%s）"'),
+        ('@"Left out of this build: %@ — %@"', '@"此构建未包含：%@ — %@"'),
+        ('@"Cheats for %@: another version of the game, its addresses do not fit this one"', '@"%@ 的金手指属于另一个游戏版本，地址不适用于当前版本"'),
+        ('@"%@: anchored cheats, not compiled for this build yet"', '@"%@：锚定金手指尚未针对此构建编译"'),
+        ('@"Copied (run it in the nxnative folder): "', '@"已复制（请在 nxnative 目录运行）："'),
+        ('@"Cheats are off: no cheats folder (DM_CHEATS or DM_ROOT is not set)"', '@"金手指已关闭：没有金手指文件夹（未设置 DM_CHEATS 或 DM_ROOT）"'),
+        ('@"%@: %d cheats, %d on%@"', '@"%@：共 %d 个金手指，已启用 %d 个%@"'),
+        ('@", %d master"', '@"，%d 个主代码"'),
+        ('@"No cheat files of this game in Ryujinx, the yuzu family or an SD card"', '@"未在 Ryujinx、yuzu 系列或 SD 卡中找到此游戏的金手指文件"'),
+        ('@"Cancel"', '@"取消"'),
+        ('@"Is “%@” for this version of the game?"', '@"“%@”适用于当前游戏版本吗？"'),
+        ('@"Its name does not say which build it is for. It will be used as the cheats of %@."', '@"文件名没有标明游戏版本。将作为 %@ 的金手指使用。"'),
+        ('@"Use for This Build"', '@"用于当前构建"'),
+        ('@"Replace %@?"', '@"替换 %@？"'),
+        ('@"The current one is kept as %@.bak (an older %@.bak is replaced)."', '@"当前文件将保留为 %@.bak（旧的 %@.bak 会被替换）。"'),
+        ('@"Replace"', '@"替换"'),
+        ('@" (apply once)"', '@"（单次应用）"'),
+        ('@" — master code (always on)"', '@" — 主代码（始终启用）"'),
+        ('@" (nxnative only)"', '@"（仅 nxnative）"'),
+        ('@"\\nRun by nxnative itself: it keeps the highest value seen since it was turned on; other engines see an empty entry."', '@"\\n由 nxnative 自身执行：保留启用后见过的最高值；其他引擎会显示为空条目。"'),
+        ('@"\\nApplied once: it writes one pass, then turns itself off."', '@"\\n只应用一次：写入一个周期后自动关闭。"'),
+        ('@"\\nSwitching it off puts the game\'s original code back."', '@"\\n关闭时会恢复游戏原始代码。"'),
+        ('@"\\nResolved weakly for this build: check its effect."', '@"\\n此构建使用弱锚点定位，请确认实际效果。"'),
+        ('@"%@ (build %@)"', '@"%@（构建 %@）"'),
+        ('@"build %@"', '@"构建 %@"'),
+        ('@"Window"', '@"窗口"'),
+        ('@"Enter Full Screen"', '@"进入全屏"'),
+        ('@"Quit "', '@"退出 "'),
+    ):
+        if old in s: n += s.count(old); s = s.replace(old, new)
+    if n: front.write_text(s); print(f'  front_mac.m: Chinese cheats window ({n} strings)')
+
+    host = nx / 'dm/host/hle_cheats.c'; s = host.read_text(); n = 0
+    for old, new in (
+        ('Build %s%s%s%s: %d cheats (%d on, %d master, %d broken)', '构建 %s%s%s%s：%d 个金手指（%d 已启用，%d 主代码，%d 损坏）'),
+        (', %d labels (%d sections)', '，%d 个标签（%d 个分区）'),
+        ('Duplicate names (saved as \\"Name #2\\", …):', '重复名称（后续保存为「名称 #2」等）：'),
+        ('%d lines that are not code words were ignored (the first: line %d)\\n', '%d 行不是金手指代码，已忽略（首个位于第 %d 行）\\n'),
+        ('%d headers glued to a code line were split off\\n', '%d 个与代码写在同一行的标题已拆分\\n'),
+        ('Toggles carried over from %s (no %s.enabled yet)\\n', '开关状态继承自 %s（尚无 %s.enabled）\\n'),
+        ('Safe mode: the last run ended without a clean exit while cheats were on; every cheat starts off\\n', '安全模式：上次启用金手指后异常退出，本次所有金手指默认关闭\\n'),
+        ('The master switch is off: no cheat runs\\n', '主开关已关闭：不会执行金手指\\n'),
+        ('%d cheats were left out when this file was compiled\\n', '编译此文件时排除了 %d 个金手指\\n'),
+        ("Over Atmosphère's limits (a Switch refuses them): %d cheats (0x80), %d cheats over 0x100 words, %d words enabled (0x400)\\n", '超过 Atmosphère 上限（Switch 会拒绝）：%d 个金手指（0x80），%d 个超过 0x100 字，启用的代码共 %d 字（0x400）\\n'),
+        ('a label, not a cheat', '这是分组标签，不是金手指'),
+        ('does not run:%s', '不会执行：%s'),
+        ('%s: not mapped right now', '%s：当前尚未映射'),
+        ('%s: %s now, kept at least %s (the highest seen)', '%s：当前为 %s，至少保持为 %s（启用后见过的最高值）'),
+        ('%s: %s now; turned on, it never goes below the highest value it reaches', '%s：当前为 %s；启用后不会低于曾达到的最高值'),
+        ('writes nothing right now (a condition is not met, or a patch\'s code is not the original any more)', '当前没有写入（条件未满足，或补丁目标已不是原始代码）'),
+        (' (already)', '（已是该值）'),
+    ):
+        if old in s: n += s.count(old); s = s.replace(old, new)
+    if n: host.write_text(s); print(f'  hle_cheats.c: Chinese cheats report ({n} strings)')
 
 
 def hle_net_poll(nx):   # cap the offline poll/select idle wait at 100 ms: Mario Kart World otherwise stalls for ~14 s at "return to home" / before the course select (0 fps)
