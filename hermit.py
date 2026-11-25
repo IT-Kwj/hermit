@@ -881,13 +881,35 @@ def launcher_window(nx):   # Hermit's "Ready to play" window in place of nxnativ
     """Hermit's own Play starts games with DM_LAUNCHER=0 (its sheet is the window there), so the game's window shows only from Finder, the Dock or Spotlight. An engine
     whose launcher model lacks what the window reads keeps nxnative's own window: a build never fails over this."""
     lw, model = Path(nx) / 'dm/mac/Launcher.swift', Path(nx) / 'dm/ios/Sources/LauncherSettings.swift'
+    mic_tester_ios_only(nx)
     if not lw.is_file() or not model.is_file(): return
+    pack = Path(nx) / 'dm/mac/pack_app.py'
+    if pack.is_file() and 'LauncherHome.swift' in pack.read_text(errors='replace'):   # kid-with-sword-remake: the Mac window lays out the iPhone's home views, which use views of its own Launcher.swift (CloudSavesSection)
+        if 's2mManrope' in lw.read_text(errors='replace'):   # Hermit's window, put there by an earlier build (issue #161): the engine's own back from its checkout
+            subprocess.run(['git', '-C', str(nx), 'checkout', '-q', '--', 'dm/mac/Launcher.swift'], check=False)
+        print("  settings window: the engine's own (its Mac window is built with the iPhone launcher's home views)"); return
     m = model.read_text(errors='replace')
     need = ('struct SettingsFile', 'func sections(basic: Bool)', 'func rows(in section: String, basic: Bool)', 'func rangeLabel', 'var changed', 'func reset()', 'func apply()', 'let fixed: Set<String>', 'var basic: Bool', 'var onValue')
     if not all(k in m for k in need) or 'dm_mac_launcher' not in lw.read_text(errors='replace'):
         print("  settings window: nxnative's own (this engine's launcher model is older than Hermit's window needs)"); return
     src = launcher_source()
     if lw.read_bytes() != src: lw.write_bytes(src); print("  settings window: Hermit's Ready to play")
+
+
+def mic_tester_ios_only(nx):
+    """kid-with-sword-remake L8 (1f1c2ecc): the launcher's home views open MicTesterView, which is iOS only (AVAudioSession, MicTester.swift) and not among
+    the Mac launcher's sources, so the Mac app's launcher did not compile (issue #161). On the Mac the sheet and its button are left out; the iPhone's are as they were."""
+    home = Path(nx) / 'dm/ios/Sources/LauncherHome.swift'
+    if not home.is_file(): return
+    s = home.read_text(errors='replace')
+    sheet = '            .sheet(isPresented: $testingMic) { MicTesterView(m: m) }\n'
+    button = 'if m.rows(in: current).contains(where: { $0.env == "DM_MIC" || $0.env == "DM_MIC_BOOST" }) {'
+    pack = Path(nx) / 'dm/mac/pack_app.py'
+    if s.count(sheet) != 1 or 'hermitMicTester' in s or not pack.is_file() or 'MicTester.swift' in pack.read_text(errors='replace'): return
+    s = s.replace(sheet, '            #if os(iOS)\n' + sheet + '            #endif\n')
+    if s.count(button) == 1: s = s.replace(button, 'if hermitMicTester && ' + button[3:])
+    s += '\n#if os(iOS)\nprivate let hermitMicTester = true\n#else\nprivate let hermitMicTester = false   // Hermit: MicTester.swift is iOS only (hermit.py mic_tester_ios_only)\n#endif\n'
+    home.write_text(s); print('  launcher: the microphone tester on the iPhone only (the Mac launcher has no MicTester.swift)')
 
 
 S2M_FONT = ROOT / 'app/fonts/Manrope.ttf'   # Hermit's interface face (SIL OFL 1.1, app/fonts/Manrope-OFL.txt)

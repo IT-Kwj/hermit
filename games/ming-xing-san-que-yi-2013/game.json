@@ -1,0 +1,61 @@
+{
+ "title_id": "01004D4A53510000",
+ "name": "明星三缺一 2013",
+ "version": "1.0.0",
+ "console": "switch",
+ "builds": [
+  {
+   "id": "macnativegames",
+   "name": "MacNativeGames",
+   "engine": {
+    "kind": "macnativegames",
+    "repo": "https://github.com/ly05010419/MacNativeGames",
+    "commit": "205477642b8fa339f27ebc6839ca3b7f4cd233f3",
+    "builder": {
+     "cwd": "games/mj2013",
+     "pip": [
+      "capstone==5.0.9",
+      "cryptography==50.0.2",
+      "lz4==4.4.5"
+     ],
+     "steps": [
+      {
+       "stage": "game code",
+       "what": "the game's code and data",
+       "cmd": [
+        "make",
+        "prepare",
+        "WORK={work}/MJ2013_build",
+        "PY={py}",
+        "GAME={base}",
+        "KEYS={keys}"
+       ]
+      },
+      {
+       "stage": "the app",
+       "what": "明星三缺一 2013.app",
+       "cmd": [
+        "make",
+        "dist",
+        "WORK={work}/MJ2013_build",
+        "PY={py}",
+        "APP={app}"
+       ]
+      }
+     ]
+    }
+   },
+   "watch": [
+    "games/mj2013"
+   ],
+   "about": "ly05010419's MacNativeGames (MIT), its mj2013 port: Early. The title, the menus and a game of mahjong against the three AI players at the game's 30 fps on an M4, with sound; mouse as the touch screen. The game is a homebrew-style port of the Windows game that draws in software, so it has no shaders. Base game (.nsp). Not built through Hermit yet.",
+   "plays": "the base game only (no update)",
+   "update_versions": [],
+   "no_update": true,
+   "app_ids": [
+    "org.macnativegames.mj2013"
+   ]
+  }
+ ],
+ "disk_gb": 5
+}

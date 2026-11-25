@@ -1,0 +1,27 @@
+{
+ "title_id": "01006CB010840000",
+ "name": "Oceanhorn 2: Knights of the Lost Realm",
+ "version": "1.1",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v65536"
+   ],
+   "version_names": {
+    "v65536": "1.1"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "fe138ad5c9a4a6a2ce93228f3a4d494cd53a29a1"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.1) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

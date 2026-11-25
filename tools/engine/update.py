@@ -157,8 +157,11 @@ def new_games():   # [(title ID, name, version, newest commit of its profile)]: 
     for item in api('repos/seedds/nxnative/contents/dm/games?ref=main'):
         tid = item['name']
         if item['type'] != 'dir' or not re.fullmatch(r'0[14][0-9A-F]{14}', tid) or tid in have: continue   # Switch 2 (04...) and Switch (01...) games
-        import base64
-        tsv = base64.b64decode(api(f'repos/seedds/nxnative/contents/dm/games/{tid}/game.tsv?ref=main')['content']).decode('utf-8', 'replace')
+        import base64, urllib.error
+        try: tsv = base64.b64decode(api(f'repos/seedds/nxnative/contents/dm/games/{tid}/game.tsv?ref=main')['content']).decode('utf-8', 'replace')
+        except urllib.error.HTTPError as x:   # a folder nxnative is still making (no game.tsv yet): not a profile, and it must not hide the others
+            if x.code != 404: raise
+            say(f'new games: {tid} in nxnative has no game.tsv yet, skipped'); continue
         name = next((l.split('\t', 1)[1].strip() for l in tsv.splitlines() if l.startswith('name\t')), tid)
         build = next((l.split('\t') for l in tsv.splitlines() if l.startswith('build\t')), ['build', 'v0'])
         c = api(f'repos/seedds/nxnative/commits?per_page=1&path=dm/games/{tid}')[0]

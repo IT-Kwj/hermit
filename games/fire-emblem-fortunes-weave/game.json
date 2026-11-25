@@ -5,7 +5,7 @@
  "engine": {
   "kind": "nxnative",
   "repo": "https://github.com/seedds/nxnative",
-  "commit": "7493ce8c8fcf8e4404c46e7e5da72f2facab1f9f"
+  "commit": "61e97458d286546ad82c270cc524fd91e74401d7"
  },
  "disk_gb": 60
 }

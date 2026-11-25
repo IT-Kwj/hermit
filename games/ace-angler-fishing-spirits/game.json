@@ -1,0 +1,27 @@
+{
+ "title_id": "01007C50132C8000",
+ "name": "Ace Angler: Fishing Spirits",
+ "version": "1.2.3",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v589824"
+   ],
+   "version_names": {
+    "v589824": "1.2.3"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "ca4ffed4017ea213acc3154186716798174974ad"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.2.3) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

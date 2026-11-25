@@ -1,0 +1,27 @@
+{
+ "title_id": "0100AD10102B2000",
+ "name": "BioShock Remastered",
+ "version": "1.0.2",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v65536"
+   ],
+   "version_names": {
+    "v65536": "1.0.2"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "bd3fc7791c5054e6385868a4aa0c4af8e6aece80"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.2) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

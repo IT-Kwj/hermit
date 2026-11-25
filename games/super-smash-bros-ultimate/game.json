@@ -10,7 +10,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "083513c7eec8f8a8891e066aeb10b470914537f1",
+    "commit": "036267eb21fab75b6e32b558cc64f91f3167b0b3",
     "builder": {
      "script": "games/ssbu/scripts/build_ssbu.py",
      "args": [
@@ -61,7 +61,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "18617ba3d38ebac32a7d7f42c9224b545e5e4a87"
+    "commit": "faf91a9dfa16aaf75218f00af677aa78782656e7"
    },
    "shader_list": "shader_list-nxnative.tsv",
    "about": "nxnative's profile (13.0.5) with Hermit's overlay and key-2 settings.",

@@ -208,6 +208,19 @@ FPS 行没有加入，这是有意为之：Pokopia 使用游戏自身的固定 6
 `9cb7f07a663f` 更新为当前引擎 `028deee1a825`。本次只更新共享列表，没有重新构建或
 替换已安装的 App；下一次构建会把 866 条全部写入 `pso_manifest.tsv`。
 
+### 合并上游 shader 列表（2026-11-25）
+
+合并 `main` 到 `MKW` 时，唯一冲突是
+`games/pokemon-pokopia/shader_list.tsv`。处理规则是保留本机
+`pokopia-native-028deee1a825` 列表和 866 条记录，再用
+`tools/shader_list.py merge pokemon-pokopia --build pokopia-native --drop-unknown`
+逐条校验上游记录。
+
+上游文件共 451 条；其中 110 条在当前引擎的 shader map 中存在且未重复，已追加到文件
+末尾，其余为重复项或当前引擎不存在的旧条目。合并后共 976 条（S 347、C 28、R 601），
+重复数为 0，列表头仍为 `028deee1a825`。其他上游代码和游戏资料均已自动合并，本机
+`--cheats`、中文设置和 poll 修复仍在。
+
 ## 2e. DRAGON BALL: Sparking! ZERO
 
 2026-11-25 完成 2.0.76（v327680）Mac 构建并安装：

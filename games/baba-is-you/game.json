@@ -14,7 +14,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "123e3b4b54338455a730e9ff65283e1d9640462a"
+    "commit": "e22fe5751c5556baba14a0df454c920f616e2a28"
    },
    "shader_list": "shader_list.tsv",
    "about": "nxnative's profile (1.0.12) with Hermit's overlay and key-2 settings: see its notes for how far it plays.",

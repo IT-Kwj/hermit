@@ -1,0 +1,27 @@
+{
+ "title_id": "01003DC0144B6000",
+ "name": "Outer Wilds",
+ "version": "1.1.15.1027",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v327680"
+   ],
+   "version_names": {
+    "v327680": "1.1.15.1027"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "3736ce6ac447e43281c057a01e90d10a43df0c50"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.1.15.1027) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
