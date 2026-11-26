@@ -2,7 +2,7 @@
 
 Title ID `01004D4A53510000`. A **Switch** game: built from your own copy's `.xci` / `.nsp` files with your own `prod.keys` (see [LEGAL.md](../../LEGAL.md)). Version 1.0.0.
 
-Built with [MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT): its [`games/mj2013`](https://github.com/ly05010419/MacNativeGames/tree/205477642b8fa339f27ebc6839ca3b7f4cd233f3/games/mj2013) port, at the commit `game.json` names, run through that port's own builder as its README describes. Early. The base game (`.nsp`). It draws in software (no GPU shaders); the mouse is the touch screen. It has its own runtime, so Hermit's overlay and key-2 settings are not added. Needs Homebrew's `python@3.14`. **Not built through Hermit yet.**
+Built with [MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT): its [`games/mj2013`](https://github.com/ly05010419/MacNativeGames/tree/17416fee1a8ab3e74042fb15cbca765cda609d88/games/mj2013) port, at the commit `game.json` names, run through that port's own builder as its README describes. Early. The base game (`.nsp`). It draws in software (no GPU shaders); the mouse is the touch screen. It has its own runtime, so Hermit's overlay and key-2 settings are not added. Needs Homebrew's `python@3.14`. **Not built through Hermit yet.**
 
 ## Build
 
