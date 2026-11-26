@@ -1,0 +1,11 @@
+{
+ "title_id": "0400E95004038001",
+ "name": "Xenoblade Chronicles 2 – Nintendo Switch 2 Edition",
+ "version": "base game",
+ "engine": {
+  "kind": "nxnative",
+  "repo": "https://github.com/seedds/nxnative",
+  "commit": "67495b458f15222589b4e957eafb99cc08de2b1e"
+ },
+ "disk_gb": 50
+}

@@ -14,7 +14,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "6a16b7d3c52d40e8dd6c9d927da92fb943309609"
+    "commit": "faf91a9dfa16aaf75218f00af677aa78782656e7"
    },
    "shader_list": "shader_list.tsv",
    "about": "nxnative's profile (2.2.1) with Hermit's overlay and key-2 settings: see its notes for how far it plays.",
@@ -28,7 +28,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "3964c8a2e09723aeb0696eef2b7fa0e9e1a13f29",
+    "commit": "52c76a72d2283bfeb42333c1386582173f22f8f1",
     "builder": {
      "cwd": "games/xc3",
      "pip": [

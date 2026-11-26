@@ -1,0 +1,27 @@
+{
+ "title_id": "0100D2D0190A4000",
+ "name": "NARUTO X BORUTO Ultimate Ninja STORM CONNECTIONS",
+ "version": "1.7.1",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v720896"
+   ],
+   "version_names": {
+    "v720896": "1.7.1"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "5bdc85b1ee450414fbf18d4e56b51d84beab802d"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.7.1) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

@@ -1,0 +1,26 @@
+# MacNativeGames' ports (github.com/ly05010419/MacNativeGames, its games/<folder>) that no build here uses, and why: tools/engine/update.py --ports
+# reports a port only when it is neither a build (a macnativegames build's watch, builder script or cwd names its folder) nor a line here.
+# Columns: folder, later (could be a build here) / no (not a Mac app, or not a game of its own), note. Recorded 2026-11-25 from MacNativeGames' README.
+acnh	later	Animal Crossing: New Horizons. Community port with a Mac app (build.py, scripts/package_native_app.py); 3.0.3 builds from MNG Launcher at 60 fps. A second build for games/animal-crossing-new-horizons.
+alc	later	Astral Chain. Work in progress: the first frame and the title flow only; patch scripts, no app builder yet.
+aoc	later	Hyrule Warriors: Age of Calamity 1.3.0. Experimental community port (scripts/build_aoc.py). A second build for games/hyrule-warriors-age-of-calamity.
+aocx	no	Age of Calamity 1.4.1 rewritten on the Zelda runtime: reaches the first battle, no Mac app yet.
+botw	no	Breath of the Wild's lists only: the game builds with games/totk's runtime and build_app.py (Hermit's Breath of the Wild build watches games/totk).
+by3	later	Bayonetta 3. Work in progress; patch scripts only, no app builder yet.
+dkb	later	Donkey Kong Bananza (Switch 2), built by build_app.py from a .nup or dump folder, as Ocarina of Time's port is (hermit.py takes Switch 2 dumps for MacNativeGames since Ocarina of Time's build). A second build for games/donkey-kong-bananza.
+eow	later	The Legend of Zelda: Echoes of Wisdom. Community port, early, with a Mac app (build.py; MNG Launcher builds it). A second build for its game here.
+jamboree	later	Super Mario Party Jamboree. Experimental community port (scripts/build_jamboree.py). A second build for its game here.
+la	later	The Legend of Zelda: Link's Awakening. Experimental community port (scripts/build_la.py, package_la.py). A second build for its game here.
+lm3	later	Luigi's Mansion 3. Work in progress, playable; no builder script in its folder yet.
+mk8d	later	Mario Kart 8 Deluxe 4.0.1. Early community port (scripts/build_mk8d.py). A second build for its game here.
+mk8dx	no	Mario Kart 8 Deluxe rewritten on the Zelda runtime: VS and Grand Prix races at 60 fps, no Mac app yet.
+mkw	later	Mario Kart World 1.0.0 (Switch 2). Experimental community port (scripts/build_mkw.py); Hermit already has five builds of this game.
+p5r	later	Persona 5 Royal on the Zelda runtime (title ID 01004B10157F2000, another release than games/persona-5-royal). Early: the title, the menus and the opening casino at 30 fps, as a Mac app (scripts/build_p5r.py, package_app.py).
+pla	later	Pokémon Legends: Arceus. Early; patch scripts only, no app builder yet.
+pokesv	later	Pokémon Violet. Work in progress; patch scripts only, no app builder yet.
+pokopia	later	Pokémon Pokopia (Switch 2), built by build_app.py from a dump, as Ocarina of Time's port is. Early: plays its opening into the first area. A fourth build for games/pokemon-pokopia.
+ss	later	The Legend of Zelda: Skyward Sword HD. Experimental community port (build.py, scripts/build_ss.py). A second build for its game here.
+tmnt	later	Teenage Mutant Ninja Turtles: Shredder's Revenge. Experimental, not yet validated as a complete game (build.py; MNG Launcher builds it).
+unicorn	later	Unicorn Overlord (Asian release). Early; patch scripts only, no app builder yet.
+w3	no	The Witcher 3 on the Zelda runtime (title ID 0100E67012924000): bring-up, gameplay at Kaer Morhen at 30 fps, no Mac app yet.
+xcx	later	Xenoblade Chronicles X: Definitive Edition. A diagnostic host with early field gameplay; needs an external work folder (scripts/package_app.py).
