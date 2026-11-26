@@ -1,0 +1,11 @@
+{
+ "title_id": "0400453019AA8001",
+ "name": "Xenoblade Chronicles X: Definitive Edition – Nintendo Switch 2 Edition",
+ "version": "base game",
+ "engine": {
+  "kind": "nxnative",
+  "repo": "https://github.com/seedds/nxnative",
+  "commit": "0834cb6aebd151b6f153f8d6c12e11704e8ff951"
+ },
+ "disk_gb": 50
+}

@@ -66,6 +66,7 @@ The app keeps itself and its game list up to date: new games and fixes arrive wh
 | Nintendo Switch 2 Welcome Tour | update v262144 | [nxnative](https://github.com/seedds/nxnative) | Added from nxnative's profile: see [its notes](https://github.com/seedds/nxnative/tree/8d62601f375fa8e15bb6d5948b416f63959a0a4d/dm/games/040057C02159A000). | [games/nintendo-switch-2-welcome-tour](games/nintendo-switch-2-welcome-tour) |
 | Super Mario Bros. Wonder – Nintendo Switch 2 Edition + Meetup in Bellabel Park | base game | [nxnative](https://github.com/seedds/nxnative) | Added from nxnative's profile: see [its notes](https://github.com/seedds/nxnative/tree/f35ebba74c8267f54b22a8b4c438047eb77ed1ae/dm/games/040015100B514001). | [games/super-mario-bros-wonder-nintendo-switch-2-edition-meetup-in-bellabel-park](games/super-mario-bros-wonder-nintendo-switch-2-edition-meetup-in-bellabel-park) |
 | Xenoblade Chronicles 2 – Nintendo Switch 2 Edition | base game | [nxnative](https://github.com/seedds/nxnative) | Added from nxnative's profile: see [its notes](https://github.com/seedds/nxnative/tree/67495b458f15222589b4e957eafb99cc08de2b1e/dm/games/0400E95004038001). | [games/xenoblade-chronicles-2-nintendo-switch-2-edition](games/xenoblade-chronicles-2-nintendo-switch-2-edition) |
+| Xenoblade Chronicles X: Definitive Edition – Nintendo Switch 2 Edition | base game | [nxnative](https://github.com/seedds/nxnative) | Added from nxnative's profile: see [its notes](https://github.com/seedds/nxnative/tree/0834cb6aebd151b6f153f8d6c12e11704e8ff951/dm/games/0400453019AA8001). | [games/xenoblade-chronicles-x-definitive-edition-nintendo-switch-2-edition](games/xenoblade-chronicles-x-definitive-edition-nintendo-switch-2-edition) |
 | Your game? | | | | [docs/porting.md](docs/porting.md) |
 
 > **Mario Kart World on a 16 GB Mac:** Macs with less than 24 GB now get nxnative's build of Mario Kart World automatically, which needs much less memory (about 11 GB): players report 60 fps on a 16 GB M6 and 36-40 fps on a 16 GB M1 Pro. azmasm's build can grow past 20 GB in long sessions, so it is kept for Macs with 24 GB or more ([both builds](games/mario-kart-world/README.md#two-builds)).
@@ -96,6 +97,7 @@ The files your dump tool wrote, for example:
 | Nintendo Switch 2 Welcome Tour | `base/` and `updates/262144/` |
 | Super Mario Bros. Wonder – Nintendo Switch 2 Edition + Meetup in Bellabel Park | `base/` (exefs and romfs) |
 | Xenoblade Chronicles 2 – Nintendo Switch 2 Edition | `base/` (exefs and romfs) |
+| Xenoblade Chronicles X: Definitive Edition – Nintendo Switch 2 Edition | `base/` (exefs and romfs) |
 
 **A `.nup` file works too** (a NUP container: the base game, updates and DLC in one file, no keys needed): choose the file itself, or a folder holding it. Every build that runs on nxnative's builder opens it directly; azmasm's build of Mario Kart World (`switch2mac` on the command line) needs a dump folder, so the app recommends another build for a `.nup`.
 
