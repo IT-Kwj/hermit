@@ -45,7 +45,7 @@ Hermit builds it as it builds nxnative (`--engine kid-with-sword`), with the sam
 
 ## Fourth build: MacNativeGames
 
-[MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT) has its own port of this game, [`games/oot`](https://github.com/ly05010419/MacNativeGames/tree/3b0eae42f4924775056ccd74df35245ef13ef586/games/oot): its own runtime and Metal 4 renderer, not nxnative. Its author plays it on an M4 from the title into Kokiri Forest and the village, with saves read back on the next start; the whole game has not been played through. Standing in the village on an M4 it runs at about 81 fps at 720p (the default) and 65 fps at 1080p; busier places are slower (44-58 fps at 1080p, by its settings).
+[MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT) has its own port of this game, [`games/oot`](https://github.com/ly05010419/MacNativeGames/tree/9c2554bc7452aa6dad1e106fb2c79b4862fe7146/games/oot): its own runtime and Metal 4 renderer, not nxnative. Its author plays it on an M4 from the title into Kokiri Forest and the village, with saves read back on the next start; the whole game has not been played through. Standing in the village on an M4 it runs at about 81 fps at 720p (the default) and 65 fps at 1080p; busier places are slower (44-58 fps at 1080p, by its settings).
 
 It has its own settings on **key 1**, so Hermit's overlay and key-2 settings are not added: resolution and upscaler (MetalFX or the game's own network) while the game runs, handheld or docked quality, a frame lock (30 by default; off, 40, 60, 72, 90 or 120) and MetalFX frame interpolation (for example 50+50 on a 100 Hz screen). The title and opening movies always use MetalFX.
 
