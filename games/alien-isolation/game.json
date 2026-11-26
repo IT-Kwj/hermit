@@ -1,0 +1,25 @@
+{
+ "title_id": "010075D00E8BA000",
+ "name": "Alien: Isolation",
+ "version": "1.1.5_64113",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v327680"
+   ],
+   "version_names": {},
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "96f1f0766344ed01b54dab8b61a6d2758985aafc"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.1.5_64113) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
