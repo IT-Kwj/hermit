@@ -221,6 +221,72 @@ FPS 行没有加入，这是有意为之：Pokopia 使用游戏自身的固定 6
 重复数为 0，列表头仍为 `028deee1a825`。其他上游代码和游戏资料均已自动合并，本机
 `--cheats`、中文设置和 poll 修复仍在。
 
+### Pokopia 存档区域渲染修复（2026-11-26）
+
+最近一次运行日志显示 8 个运行时 shader 不在 App 的 shader map：
+
+```text
+a28265be31de416c
+9f3e4b70e968ff57
+2c59f19e9e29f7cd
+ba8bb76edc0b805a
+b781185b4555d0e2
+d5e7438de8145ec6
+a18a7f160d89f54c
+14827bfb3dda93ce
+```
+
+其中 `14827bfb3dda93ce` 出现在存档区域附近。8 个 shader 的 `.ctl/.code`
+都已经在 Application Support 的 `shdump` 中。用增量 refresh 编入后，
+8 个 key 全部进入新 App 的 `shader_map.tsv`。
+
+同时把本机 `shader-list-contribution.txt` 的 413 条记录合并进共享列表，
+从 976 条增加到 983 条（新增 7 条，其余已存在或当前引擎不支持），并把 983 条
+预热记录写入 App 的 `pso_manifest.tsv`。
+
+增量结果：
+
+- 新 host keys：16
+- 新 corpus programs：15
+- 新编译 Metal libraries：36
+- 已知运行时 shader 覆盖：127/154 → 128/154
+- 另把 15 个不在官方 154 清单中的运行时 shader 编入 map
+- App 仍为 7.3 GB，严格签名检查通过
+- 已安装到 `/Applications/Pokemon Pokopia.app`
+- 存档 `save/G00/STGDAT01.BIN` 和 `save.work/G00/STGDAT01.BIN` 未改动
+
+仍有 26 个官方已知运行时 shader 尚未抓到；其他新场景若出现缺失，需要继续用
+`nxs2.py refresh` 增量补入。日志里的压缩纹理零填充和两个 NVN 未实现调用属于
+引擎兼容项，不能靠 shader dump 修复。
+
+#### 2026-11-26 最终重建与分卷
+
+修复后在游戏中继续运行，新增了 9 条预热/pipeline 记录。它们已并入
+`games/pokemon-pokopia/shader_list.tsv`，共享列表从 983 条增加到 992 条。
+这 9 条不是新的缺失 shader；上次修复的 8 个 shader 仍全部在 shader map 中。
+
+再次执行增量 refresh 并安装：
+
+- `pso_manifest.tsv`：992 条预热记录
+- shader map：3,959 条
+- 运行时已知 shader 覆盖保持 128/154
+- 新 App 为 7.3 GB，严格签名检查通过
+- 已安装到 `/Applications/Pokemon Pokopia.app`
+- 存档和 `shdump` 未改动
+
+分包位于：
+
+```text
+/Users/amid031799/Downloads/Mac编译/Pokemon Pokopia upload
+```
+
+- `.z01`、`.z02` 加最后 `.zip`，共 3 个文件、约 7.1 GB
+- 使用 `zip -y -fz -n .img -s 3g -r`；6.7 GB 的 `romfs.img` 原样存储
+- `7zz t` 完整测试通过：3 个分卷、12,779 个文件、`Everything is Ok`
+- SHA-256 清单全部通过，并包含群图片和中文 `解压说明.txt`
+- 已实际用 `7zz x -y -snld` 直接读取分卷并解压
+- 恢复后的 App 签名通过，`pso_manifest.tsv` 为 992 条，全部修复 shader 仍存在
+
 ## 2e. DRAGON BALL: Sparking! ZERO
 
 2026-11-25 完成 2.0.76（v327680）Mac 构建并安装：
@@ -477,7 +543,85 @@ logo 属于游戏内容，**不要提交进 git**；源文件放在仓库外（�
 
 ### 大金刚（Donkey Kong Bananza，title ID `040074A01BF12000`）
 
-源图：`/Users/amid031799/Downloads/QIGANG/logo.jpeg`（1268×951 横版）。横版图先居中裁成正方形，再缩到 1024×1024 的 JPEG：
+2026-11-25 的高配 `nxnative` 构建使用
+`/Users/amid031799/Downloads/Mac编译/DQG/logo.png`，通过
+`build --icon` 直接写入 App，不再需要预先写 `icon.jpg`：
+
+```bash
+./hermit.py build "/Users/amid031799/Downloads/Mac编译/DQG" \
+  --engine nxnative \
+  --icon "/Users/amid031799/Downloads/Mac编译/DQG/logo.png" \
+  --progress lines
+```
+
+本次识别到本体、更新 `v458752` 和 1 个 DLC；引擎为
+`nxnative@019a1f69cfac`。构建出 23,636 个 Mac shader、2.2 GB
+`applegpu_g15s` pipeline archive，最终 App 为 14.1 GB，默认语言为简体中文。
+已通过严格签名检查并安装到：
+
+```text
+/Applications/Donkey Kong Bananza.app
+```
+
+分包位于：
+
+```text
+/Users/amid031799/Downloads/Mac编译/Donkey Kong Bananza upload
+```
+
+- `.z01` 至 `.z04` 加最后 `.zip`，共 5 个文件、约 13 GB
+- 使用 `zip -y -fz -n .img -s 3g -r`；8.6 GB 的 `romfs.img` 原样存储
+- `7zz t` 完整测试通过：5 个分卷、70 个文件、`Everything is Ok`
+- SHA-256 清单全部通过，并包含群图片和中文 `解压说明.txt`
+- 归档内保留 `aoc`、`romfs.img`、`msl`、`pso` 4 个相对符号链接
+- 苹果 `zip -s 0` 合并后在 8.6 GB ZIP64 条目上解压失败，不能用于此包
+- 已验证 `7zz x -y -snld "Donkey Kong Bananza.zip" -o...` 可直接读取分卷、
+  保留 4 个链接，恢复后的 14 GB App 通过 `codesign --verify --deep --strict`
+
+构建缓存保留在 `work/040074A01BF12000`，供下次增量构建；`install` 已删除 App
+不再需要的中间文件。图标验证为 `AppIcon.icns`、1024×1024。历史横版源图
+`/Users/amid031799/Downloads/QIGANG/logo.jpeg` 的处理方式仍保留如下：
+
+#### 2026-11-25 低配 horizon-nx2 构建
+
+低配使用 `horizon-nx2@0d7cc654ed6d`，继续使用 `DQG` 的 `v458752`、
+1 个 DLC 和 1024×1024 logo，默认语言为简体中文。它与高配 nxnative 不能
+共用正常的 `work/040074A01BF12000`：两台构建器的 shader 缓存键都包含
+`b-0a2906d60f49`，但高配是 4.8 GB 缓存文件，低配需要同名目录。
+
+因此低配改用独立工作目录：
+
+```text
+work/040074A01BF12000-horizon
+```
+
+在该目录预先生成旧构建器要求的 `extract/v458752/icon.jpg`，直接运行
+`horizon-nx2` 的 `build_ipa_from_nsp.py`，没有移动或覆盖高配缓存。
+
+- 23,638 个 Mac shader 全部成功
+- `applegpu_g15s` pipeline archive：1.0 GB
+- 成品 App：12.4 GB
+- 已通过严格签名检查
+- 已安装到 `/Applications/Donkey Kong Bananza.app`
+- 安装后 `DMCommit=0d7cc654ed6d+dirty`，确认当前是低配版
+
+高配分卷仍保留在 `Downloads/Mac编译/Donkey Kong Bananza upload`。低配构建缓存
+约 20 GB 留在独立目录，高配缓存仍在 `work/040074A01BF12000`。
+
+低配分卷位于：
+
+```text
+/Users/amid031799/Downloads/Mac编译/Donkey Kong Bananza Low Memory upload
+```
+
+- `.z01` 至 `.z03` 加最后 `.zip`，共 4 个文件、约 11 GB
+- 使用 `zip -y -fz -n .img -s 3g -r`；8.6 GB `romfs.img` 原样存储
+- `7zz t` 完整测试通过：4 个分卷、94,579 个文件、`Everything is Ok`
+- SHA-256 清单全部通过，并包含群图片和中文 `解压说明.txt`
+- 已实际用 `7zz x -y -snld` 直接读取分卷并解压
+- 恢复后的 13 GB App 的 `DMCommit` 仍为 `0d7cc654ed6d+dirty`，
+  `codesign --verify --deep --strict` 通过
+- 高配分卷目录未改动
 
 ```bash
 TMP="$(mktemp -d)/square.png"

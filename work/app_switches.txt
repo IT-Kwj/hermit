@@ -1,5 +1,2 @@
-S2M_ENGINE=nxnative-a235328d5966
-S2M_BUILD=kid-with-sword-remake
-DM_UPSCALER=metalfx
-DM_FPS_HOLD=off
-DM_ALIAS_SIZE=0x200000000
+S2M_ENGINE=nxnative-0d7cc654ed6d
+S2M_BUILD=horizon-nx2 (MacBook Air)
