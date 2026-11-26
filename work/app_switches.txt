@@ -1,2 +1,2 @@
-S2M_ENGINE=nxnative-0d7cc654ed6d
-S2M_BUILD=horizon-nx2 (MacBook Air)
+S2M_ENGINE=nxnative-59fc8445a9bc
+S2M_BUILD=nxnative

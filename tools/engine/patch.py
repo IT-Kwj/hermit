@@ -194,6 +194,8 @@ static void seed_cheats(const char *src, const char *dst) {
          "                (args.gpu or PSO_GPUS).strip(), programs, control, args.cheats)\n"),
         ("                (args.gpu or PSO_GPUS).strip(), programs, control, PREBAKE if args.prebake is None else args.prebake)\n",
          "                (args.gpu or PSO_GPUS).strip(), programs, control, PREBAKE if args.prebake is None else args.prebake, args.cheats)\n"),
+        ("                (args.gpu or PSO_GPUS).strip(), programs, control, PREBAKE if args.prebake is None else args.prebake, runtime_python=runtime_python, romfs=romfs)\n",
+         "                (args.gpu or PSO_GPUS).strip(), programs, control, PREBAKE if args.prebake is None else args.prebake, runtime_python=runtime_python, romfs=romfs, cheats=args.cheats)\n"),
     )
     for old, new in calls:
         if old in s:
@@ -434,6 +436,7 @@ def settings_rows_zh(nx):   # by variable, not by the whole line: nxnative's cap
         'DM_PSO_PREBUILD': '管线预构建',
         'DM_NVN_ENC_THREAD': '编码线程',
         'DM_NVN_TEX_MIP_SKIP': '纹理内存节省',
+        'DM_NVN_ANISO': '纹理过滤',
         'DM_FPS_HOLD': '掉帧时保持帧',
         'DM_METAL_HUD': '性能信息',
         'DM_PICTURE_FIT': '画面',
@@ -469,6 +472,7 @@ def settings_rows_zh(nx):   # by variable, not by the whole line: nxnative's cap
         'DM_PRESET': '同时设置纹理质量、渲染比例、帧率、放大方式和性能开关；修改其中一项后会变为“自定义”。',
         'DM_FPS_LOCK': '30 帧会锁定游戏步进，避免在 30 和 60 之间跳动；60 帧在设备跟不上时会变成慢动作。',
         'DM_NVN_TEX_FLOOR': '越低越省内存（更少卡顿）；近看表面会更模糊，但清晰度和渲染比例一致。',
+        'DM_NVN_ANISO': '斜视看到的地面和墙面会更清晰；在 Mac 上 16x 的性能开销很小。',
         'DM_FAST_720': '3D 画面约 720p，由 MetalFX 放大：更快但稍软。开启时替代渲染比例和游戏内置升频器。',
         'DM_FULL_DOCKED': '以 Switch 2 完整底座尺寸 1920x1080 绘制（而非 1536x864）：更清晰，每帧约慢 2-3 ms。',
     }
@@ -482,7 +486,8 @@ def settings_rows_zh(nx):   # by variable, not by the whole line: nxnative's cap
         ('Custom', '自定义'), ('Full', '完整'), ('Medium', '中'), ('Low', '低'),
         ('Game decides', '游戏决定'), ('Locked 30 fps', '锁定 30 帧'), ('Locked 60 fps', '锁定 60 帧'),
         ('Match screen', '匹配屏幕'), ('iPhone Duo screen', 'iPhone Duo 屏幕'),
-        ('Automatic', '自动'),
+        ('Automatic', '自动'), ('Game default', '游戏默认'),
+        ('Fit', '适配'), ('Fill', '填充'),
     )
     changed = False
     out = []

@@ -531,6 +531,77 @@ Cheats 菜单、窗口、按钮和提示已汉化；游戏中从“金手指 →
 已恢复到 `ADS`，并核对为 5.6 GB XCI 和 298 MB NSZ。项目里的
 `games/super-mario-odyssey` 属于支持信息，不是构建产物，保留。
 
+## 2h. Super Mario Bros. Wonder 1.2.1
+
+2026-11-26 使用 `/Users/amid031799/Downloads/Mac编译/JQ` 中 8.3 GB 的
+`Super Mario Bros Wonders Switch 2 Edition [010015100B514000].nup` 构建：
+
+```bash
+.venv/bin/python ./hermit.py build \
+  "/Users/amid031799/Downloads/Mac编译/JQ" \
+  --engine nxnative \
+  --icon "/Users/amid031799/Downloads/Mac编译/JQ/logo.png"
+```
+
+- Title ID：`010015100B514000`
+- NUP 内容：基础游戏、更新 `v327680`（1.2.1）和 1 个 DLC
+- NUP 构建不需要 `prod.keys`
+- 引擎：`nxnative@59fc8445a9bc`
+- Mac shader：40,752 个全部成功
+- Pipeline archive：2.9 GB
+- App：14.2 GB，默认语言 `en-US`
+- 横版 logo 已生成 1024×1024 `AppIcon.icns`
+- 严格签名检查通过
+- 已安装到 `/Applications/Super Mario Bros. Wonder.app`
+- 构建缓存：`work/010015100B514000`，安装后约 17 GB
+
+启动页剩余三项英文已在 `tools/engine/patch.py` 补译：
+
+- `Texture filtering` → `纹理过滤`
+- `Game default` → `游戏默认`
+- `Fit` / `Fill` → `适配` / `填充`
+
+本次 NUP 只有 `010015100B514000` 基础程序、`v327680` 更新和
+`010015100B515001` 追加内容，没有铃铃公园原生 Switch 2 程序
+`040015100B514001`。因此这版是普通 Switch 程序构建，不能当作完整的
+“Nintendo Switch 2 Edition + 同游铃铃公园”原生版本。
+
+惊奇 1.2.1 的公开金手指已整理为匹配 `BID FF773E90972D544E` 的文件：
+
+```text
+/Users/amid031799/Downloads/Mac编译/JQ/FF773E90972D544E.txt
+```
+
+包含金币变 99、生命数 99、受伤触发闪闪模式、紫色复活币 999，以及铃铃公园
+水量最大和无敌。代码来自 `vbbbs.com/cheats/51550.html` 与 GBAtemp
+“Cheat Codes AMS and Sx Os”第 3704 页中 OblivionReign 的同 BID 条目。
+文件按 `- on` / `- off` 成对整理，关闭修改代码的金手指时会写回原指令。
+
+已使用该文件重新构建并安装。`tools/engine/patch.py` 原先只匹配 nxnative
+旧版的两条 `mac_app(...)` 调用，当前上游把参数写成
+`runtime_python=..., romfs=...` 后，命令行虽然接受 `--cheats`，却没有传给
+`pack_app.py`。现已补上第三种调用形式，并在构建日志中确认出现
+`Mac app · cheats`。安装后的 App 内文件为：
+
+```text
+/Applications/Super Mario Bros. Wonder.app/Contents/Resources/cheats/FF773E90972D544E.txt
+```
+
+该文件 SHA-256 为
+`51d6658159c3421b75c26b013ebee47f360c84c222fa9b748b7198891ebc1f61`，
+严格签名检查通过。启动器首次运行时会将它复制到可写目录
+`~/Library/Application Support/nxnative/010015100B514000/cheats/`。
+游戏内从“金手指 → 显示金手指窗口”打开，或按 `⌘⇧C`。
+
+以后重新构建时要加：
+
+```bash
+--cheats "/Users/amid031799/Downloads/Mac编译/JQ/FF773E90972D544E.txt"
+```
+
+系统 Python 缺少读取 NUP 所需的 `zstd` 模块；终端中使用
+`.venv/bin/python ./hermit.py`，不要直接依赖系统 Python。
+
 ## 3. 游戏图标（每次构建必做）
 
 > **规则：每次 `build` 都必须确认成品 App 带自定义 logo，不能是空白图标。** 构建日志里要出现 `app icon:`，且 `*.app/Contents/Resources/AppIcon.icns` 存在。
