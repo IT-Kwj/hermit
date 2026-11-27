@@ -599,8 +599,307 @@ Cheats 菜单、窗口、按钮和提示已汉化；游戏中从“金手指 →
 --cheats "/Users/amid031799/Downloads/Mac编译/JQ/FF773E90972D544E.txt"
 ```
 
+#### 惊奇 1.2.1 金手指版分卷
+
+2026-11-26 将 `/Applications/Super Mario Bros. Wonder.app` 分包到：
+
+```text
+/Users/amid031799/Downloads/Mac编译/Super Mario Bros. Wonder upload
+```
+
+- `Super Mario Bros. Wonder.z01` 至 `.z04` 各 3 GiB，最后一个 `.zip`
+  约 313 MiB，加 SHA-256 清单后总共约 12 GiB
+- 使用 `zip -q -y -fz -n .img -s 3g -r`；4 个 `.img` 超过 2 GiB，
+  其中 `aoc/1.img` 为 5 GiB，全部原样存储
+- `7zz t` 完整测试通过：5 卷、67 个文件、15,211,689,692 字节，
+  `Everything is Ok`
+- 按 `.z01`、`.z02`、`.z03`、`.z04`、`.zip` 顺序拼接后，
+  `bsdtar -xOf - > /dev/null` 完整流式读取通过
+- ZIP 中 4 个符号链接 `aoc`、`romfs.img`、`msl`、`pso` 均保留为
+  `lrwxr-xr-x`，没有跟随链接重复打包
+- `Super Mario Bros. Wonder.sha256` 已生成，5 个文件逐项复核均为 `OK`
+- 已放入 `加微信进群获取免费更新，请备注mac原生游戏.png`
+- `解压说明.txt` 严格由 `docs/templates/解压说明模板.txt` 替换游戏名、
+  版本名和文件名生成，没有增加或删改其他正文
+- 源 App、存档、金手指种子和构建缓存均保留
+
+#### 2026-11-27：删除惊奇 App 与构建缓存
+
+按用户要求删除 `/Applications/Super Mario Bros. Wonder.app`（约 14 GB）和
+`work/010015100B514000`（约 17 GB）。删除后磁盘可用空间从约 22 GiB 增至
+约 59 GiB。`Downloads/Mac编译` 整个目录未删除或改写；nxnative 存档、
+运行金手指状态、shader contribution 和共享 shader list 均保留。
+
 系统 Python 缺少读取 NUP 所需的 `zstd` 模块；终端中使用
 `.venv/bin/python ./hermit.py`，不要直接依赖系统 Python。
+
+## 2i. Splatoon Raiders v65536
+
+2026-11-27 使用 `/Users/amid031799/Downloads/Mac编译/TJD` 构建：
+
+```bash
+.venv/bin/python ./hermit.py build \
+  "/Users/amid031799/Downloads/Mac编译/TJD" \
+  --icon "/Users/amid031799/Downloads/Mac编译/TJD/logo.png"
+```
+
+- Title ID：`0400380020056000`，版本 `v65536`（1.0）
+- 引擎：`nxnative@ef8b25d2c5a8`
+- Shader：27,190 个全部成功，0 个从缓存复用
+- Pipeline archive：2.9 GB；prewarm：1.7 MB
+- App：18.5 GB（`du` 显示约 19 GB），默认语言 `en-US`
+- `TJD/logo.png` 已生成 3.2 MB `AppIcon.icns`
+- 启动页检查通过；设置项、说明、选项和性能悬浮层均为中文
+- 严格签名检查通过，已安装到 `/Applications/Splatoon Raiders.app`
+- 构建缓存：`work/0400380020056000`，安装后约 20 GB
+
+第一次拉取该 nxnative 提交时，代理下 Git 报
+`HTTP2 framing layer` / `expected flush after ref listing`。没有改游戏文件或
+全局 Git 配置，改用 HTTP/1.1 环境变量重试后成功：
+
+```bash
+GIT_CONFIG_COUNT=1 \
+GIT_CONFIG_KEY_0=http.version \
+GIT_CONFIG_VALUE_0=HTTP/1.1 \
+  .venv/bin/python ./hermit.py build ...
+```
+
+#### 2026-11-27：合并运行时渲染记录并重构
+
+用户试玩约 20 分钟后，App 记录了 7,131 条构建时共享列表没有的渲染行：
+
+- `S` shader：5,626
+- `C` compute shader：19
+- `R` render pipeline：1,486
+- 实际生成并归档的 Metal pipeline bases：1,340 个，约 232 MB
+- 与原有 2,862 行比较：7,131 行全部为新增，0 个重复
+
+使用以下命令合并：
+
+```bash
+.venv/bin/python tools/shader_list.py merge splatoon-raiders \
+  "$HOME/Library/Application Support/nxnative/0400380020056000/shader-list-contribution.txt"
+```
+
+共享列表从 2,862 行增加到 9,993 行（文件共 9,996 行，含 3 行文件头）。
+重建前按既定规则删除 `/Applications/Splatoon Raiders.app`，存档
+`Library/Application Support/nxnative/0400380020056000/save/save.dat`
+保留，删除前后 SHA-256 均为
+`400081fb97a14ebea335106e6d3774c616fccd07b5dc2cd9043da318cbbd26b2`。
+
+旧 App 删除后可用空间约 36 GiB。由于解码和 shader 缓存仍在，本次使用
+`S2M_SKIP_DISK_CHECK=1` 做增量重建。结果：
+
+- 27,190 个 Mac shader 全部复用，没有重新编译
+- 新 pipeline archive：2.9 GB
+- 新 prewarm：1,507 行、241.1 MB（旧版为 21 行、1.7 MB）
+- 新 App：18.7 GB（`du` 约 19 GB）
+- 严格签名检查通过，已重新安装到 `/Applications/Splatoon Raiders.app`
+- 保留 `work/0400380020056000` 约 20 GB；安装后可用空间约 22 GiB
+
+#### 2026-11-27：斯普拉遁分卷压缩
+
+将 `/Applications/Splatoon Raiders.app` 分包到：
+
+```text
+/Users/amid031799/Downloads/Mac编译/Splatoon Raiders upload
+```
+
+- `Splatoon Raiders.z01` 至 `.z05` 各 3 GiB，最后一个 `.zip` 约 2 GiB
+- 上传目录约 17 GiB
+- 使用 `zip -q -y -fz -n .img -s 3g -r`；13 GB 的 `romfs.img`、
+  2.9 GB 的 pipeline archive 和 2.7 GB 的 shader library 原样存储
+- `7zz t` 完整测试通过：6 个分卷、68 个文件、22 个目录，
+  20,128,476,638 字节，`Everything is Ok`
+- 按 `.z01` 至 `.z05`、`.zip` 顺序拼接后，
+  `bsdtar -xOf - > /dev/null` 完整流式读取通过
+- ZIP 中 `romfs.img`、`msl`、`pso` 三个符号链接均保留为
+  `lrwxr-xr-x`，没有跟随链接重复打包
+- `Splatoon Raiders.sha256` 已生成，6 个压缩分卷逐项复核均为 `OK`
+- 已放入 `加微信进群获取免费更新，请备注mac原生游戏.png`
+- `解压说明.txt` 严格由 `docs/templates/解压说明模板.txt` 替换游戏名、
+  分卷编号和 App 文件名生成，没有增加或删改其他正文
+- 源 App、存档和构建缓存均保留
+
+#### 2026-11-27：Splatoon Raiders 金手指
+
+为精确版本 `0400380020056000 / v65536 / main Build ID
+663c2e087a083f05307f229dfc4042d5` 增加宿主侧金手指：
+
+- 无限墨水
+- 快速射击
+- 飞行 / 穿墙
+- 任意地点游泳
+- 122 种武器切换与“恢复原始武器”
+
+该方案不是普通 Atmosphère `.txt`。飞行、游泳和武器切换需要持续读取玩家、
+摄像机、输入、物理体和装备对象，因此通过 nxnative 的四个观察钩子调用
+`hle_raiders_mods.c`，并在 `2` 键设置面板顶部显示“金手指”区域。四个钩子
+只在完整 Build ID 匹配、原始指令逐字匹配且对象类型校验通过时工作。
+
+完整设计、构建注入流程、环境开关、维护方法、验证命令和版本升级注意事项
+记录在 [`splatoon-raiders-mods.md`](splatoon-raiders-mods.md)。
+
+## 2j. 火影忍者 终极风暴羁绊（亚洲版临时配置）
+
+2026-11-27 使用 `/Users/amid031799/Downloads/Mac编译/HY` 的亚洲版文件构建：
+
+- Title ID：`0100D010190A8000`
+- 版本：`1.6.0 / v589824`
+- 更新文件：`upd-1.6.0/[UPD][v1.6.0][0100D010190A8800][v589824].nsz`
+- 金手指：`A281486F065593A2.txt`，与该更新 Build ID 匹配
+- DLC：`dlc-10` 中 10 个包，索引 1、2、5-12
+- 引擎：`nxnative@eed6ffc95a0f`
+- 密钥：`/Users/amid031799/Downloads/Mac编译/prod.keys`
+- Logo：`HY/logo.png`
+
+该 Title ID 与项目已测试的 USA 版 `0100D2D0190A4000 / 1.7.1`
+不同，上游也没有亚洲版配置，因此本次使用 provisional profile。自动探测
+确认 `main/subsdk0/sdk`、5 GB 内存布局、570 个 NVN shader 和 10 个 DLC；
+另有 `subsdk1`（GLSLC）与 `subsdk2`（NintendoSDK_OpenGL），主机不加载这
+两个模块。自动 heap check 得到 3.14 GB heap、`mem_alias 0x50000000`。
+
+构建结果：
+
+- 570 个 Mac shader 全部成功
+- Pipeline archive：352 KB；没有 prewarm pipeline
+- App：14.0 GB
+- NACP 语言：韩语、繁体中文、简体中文；启动页和 App 默认语言改为简体中文
+- 金手指文件已进入
+  `Contents/Resources/cheats/A281486F065593A2.txt`，SHA-256
+  `4ea37fc82d4ad604115cd6e1a089405533ba92ee35494fd890d5da6ebb73a287`
+- Logo 已生成 3.2 MB `AppIcon.icns`
+- 严格签名检查通过，已安装到
+  `/Applications/火影忍者 终极风暴羁绊.app`
+- 安装后 `work/0100D010190A8000` 约 117 MB，磁盘可用约 35 GiB
+
+#### GL UI 缺失修复
+
+首次运行发现 NVN 主循环约 30 fps、声音正常，但 FPS HUD 显示 0，按键有
+声音而画面不动。日志显示：
+
+```text
+cannot open .../msl/gl/gl_shaders.tsv
+Metal device Apple M3 Max; 0 shader table entries
+vertex/fragment shader ... is not in the library
+program: a shader is missing, its draws are skipped
+```
+
+该游戏同时使用 NVN 和 OpenGL ES 3.0，provisional profile 只构造了 570 个 NVN
+shader，没有 OpenGL UI shader。使用 `DM_GL_CAPTURE` 重启一次捕获，得到
+387 个 `.vert` / `.frag` 源文件；其中 387 个全部成功翻译为 Metal：
+
+```text
+work/0100D010190A8000/gl_capture/
+work/0100D010190A8000/gl-build/gl/gl_shaders.metallib
+work/0100D010190A8000/gl-build/gl/gl_shaders.tsv
+```
+
+翻译使用 nxnative 最新版 `gl_shaders.py` 的
+`#version 300 es -> #version 310 es` 修复。生成结果已放入
+`ShaderLibraries.bundle/Contents/Resources/msl/gl/`，并重新签名。无窗口
+验证日志确认：
+
+```text
+[gl] Metal device Apple M3 Max; 387 shader table entries
+```
+
+原来的 GL shader missing / draws skipped 报错已消失。
+
+#### 最终中文名称、默认语言和 FPS 计数
+
+最终只保留中文游戏名 `火影忍者 终极风暴羁绊`，不再显示英文或韩文：
+
+- App 路径：`/Applications/火影忍者 终极风暴羁绊.app`
+- `Info.plist` 的 `CFBundleDisplayName`、`CFBundleName` 都是纯中文
+- `Info.plist` 的 `DMLanguage` 和 `launcher.json` 的 `DM_LANG.default`
+  都是 `zh-Hans`
+- 启动器默认选中“简体中文”；实测游戏进程环境为 `DM_LANG=zh-Hans`
+- `Contents/Resources/control.nacp` 的第 12、13、14 个标题槽
+  （韩语、繁体中文、简体中文）都改为纯中文，发布者字段和
+  SupportedLanguageFlag 未改
+- 主机窗口标题不是只读 `control.nacp`：`front_mac.m` 通过
+  `DM_GAME_NAME` 设置标题，而且 Clang 会同时留下 UTF-8 和 UTF-16
+  两份常量。两份都已替换；最终二进制中搜索不到原韩文标题
+- 用 `CGWindowListCopyWindowInfo` 实测窗口标题为
+  `火影忍者 终极风暴羁绊`
+
+FPS 0 的根因不是游戏停帧。日志里的游戏实际稳定在 30 fps，但覆盖层原先
+读取 `mtl_cur_frame()`，也就是 NVN 回放帧号；该游戏的标题页和 GL 菜单页
+走 OpenGL 呈现路径，不推进这个计数，所以显示 0。现在
+`tools/engine/s2m_ui.m` 改用宿主的真实呈现计数
+`dm_nvn_frame_count()`：
+
+```c
+static uint64_t overlay_frame_count(void) { return dm_nvn_frame_count(); }
+```
+
+这样 NVN、OpenGL 和混合呈现路径都会显示真实 FPS。当前已安装 App 为了
+保留原有 shader chain，使用同一修复的等价二进制补丁，把
+`_mtl_cur_frame` 直接转到 `_dm_nvn_frame_count`。实测启动画面显示
+`FPS 30`，窗口标题为 `火影忍者 终极风暴羁绊`，严格签名检查通过。
+
+#### shader chain 与以后重建
+
+当前 App 来自 `nxnative@eed6ffc95a0f`，`Info.plist` 和 shader 库使用
+chain `343aa69bfb7a`。当前仓库的新源码 chain 是 `53cf95b181aa`；只替换
+`Contents/MacOS/dmhost`、不重新生成 shader 库和 pipeline archive 会让
+旧库全部被判为不兼容，启动后立即退出。因此不要把这个新源码编出的
+`dmhost` 单独塞进当前 App。
+
+以后完整重建时，应让 `dmhost`、`b-<chain>/` shader 库和 pipeline archive
+由同一次构建一起生成；然后重新应用中文 `DM_GAME_NAME`、NACP 标题和
+`zh-Hans` 默认语言。`tools/engine/s2m_ui.m` 中的 FPS 修复已经进入仓库，
+以后的 nxnative 构建会直接带上。
+
+本次修改前还原点：
+
+```text
+work/restorepoints/naruto-zh-fps-20261127-1351/
+```
+
+#### 2026-11-27：分卷压缩
+
+将 `/Applications/火影忍者 终极风暴羁绊.app` 分包到：
+
+```text
+/Users/amid031799/Downloads/Mac编译/火影忍者 终极风暴羁绊 upload
+```
+
+- `火影忍者 终极风暴羁绊.z01` 至 `.z04` 各 3 GiB，
+  最后的 `.zip` 约 2.0 GiB，整个上传目录约 14 GB
+- 使用 `zip -q -y -fz -n .img -s 3g -r`；`-y` 保留 App 内符号链接
+- `7zz t` 完整测试通过，退出码为 0
+- ZIP 中 `aoc`、`romfs.img`、`msl`、`pso` 四个符号链接均保留为
+  `lrwxr-xr-x`，没有跟随链接重复打包
+- `火影忍者 终极风暴羁绊.sha256` 已生成，5 个压缩分卷逐项复核均为 `OK`
+- 已放入 `加微信进群获取免费更新，请备注mac原生游戏.png`
+- `解压说明.txt` 严格由 `docs/templates/解压说明模板.txt` 生成，只替换
+  标题、分卷基名、SHA-256 文件名和 App 文件名，没有增加或删改其他正文
+- 已安装 App、存档、运行时数据和本次生成的 12 个新 pipeline 均保留
+
+#### 2026-11-27：删除 `Mac编译` 以外的火影文件
+
+按用户要求删除 `/Users/amid031799/Downloads/Mac编译` 以外的火影 App、
+构建产物和运行数据：
+
+- `/Applications/火影忍者 终极风暴羁绊.app`
+- `work/0100D010190A8000`
+- `engines/nxnative-8950f2ea0fc1/dm/host/gen/0100D010190A8000`
+- `work/restorepoints/naruto-zh-fps-20261127-1351`
+- `Library/Application Support/nxnative/0100D010190A8000`，包括存档、
+  `pso_archive`、运行日志贡献文件和金手指运行副本
+- `Library/Logs/nxnative/0100D010190A8000.log` 与 `.prev.log`
+- 偏好设置 `org.nxnative.0100d010190a8000`
+- iCopy 的派生图标副本；原始 logo 仍在 `Mac编译/HY/logo.png`
+
+`Mac编译/HY` 的游戏本体、更新、DLC、密钥、金手指源文件和 logo 全部
+保留；`Mac编译/火影忍者 终极风暴羁绊 upload` 的 5 个分卷、SHA-256、
+中文解压说明和图片全部保留。删除后磁盘可用空间从约 12 GiB 增至
+约 26 GiB。
+
+这是 provisional profile：可能启动失败，或进入游戏后出现渲染/服务问题。
+后续若上游加入该亚洲版/1.6.0 专用配置，应优先切回官方配置。
 
 ## 3. 游戏图标（每次构建必做）
 

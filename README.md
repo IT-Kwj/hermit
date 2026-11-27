@@ -188,7 +188,7 @@ Each game is built with the engine its port was made with, pinned in its `game.j
 | `tools/issue_guard.py` | hides issues and comments that contain keys, game files or links to sites that hand them out ([LEGAL.md](LEGAL.md)) |
 | `tools/engine/` | Hermit's front end for the games built with another engine: the overlay and settings panel (`s2m_ui.m`), the script that adds it to that engine (`patch.py`) and the one that moves those games to their build's newest commit (`update.py`) |
 | `tools/porting/` | helpers for bringing up a game: run-time shader finder, NSO disassembly helper, pass tracer, performance summary |
-| `docs/` | [porting.md](docs/porting.md) (bringing up a game), [mario-kart-world.md](docs/mario-kart-world.md) (how the first port was made) |
+| `docs/` | [porting.md](docs/porting.md) (bringing up a game), [mario-kart-world.md](docs/mario-kart-world.md) (how the first port was made), [splatoon-raiders-mods.md](docs/splatoon-raiders-mods.md) (the Raiders host-side mods) |
 | `.github/` | the issue forms (How it ran, Shader list, Problem) and the workflows that read them, guard them and keep the builds up to date |
 | `LEGAL.md`, `NOTICE.md`, `LICENSE` | what Hermit does and does not do, every project it builds on, its MIT licence |
 | `AGENTS.md` | notes for AI coding assistants |

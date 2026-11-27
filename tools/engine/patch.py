@@ -10,6 +10,7 @@
 Each change is found by a line of the pinned commit's source and made once (a second run changes nothing); a line that is not there stops it, naming the file.
 """
 import re
+import os
 import sys
 from pathlib import Path
 
@@ -81,10 +82,87 @@ def main():
     settings_rows_zh(nx)
     game_marks_zh(nx)
     pokopia_language_zh(nx)
+    raiders_mods(nx)
     hle_net_poll(nx)
     no_lag_pso_batch(nx)
     cheats_bundle(nx)
     cheats_zh(nx)
+
+
+def raiders_mods(nx):
+    """Splatoon Raiders host mods, keyed to the exact v65536 main build ID."""
+    if os.environ.get('DM_GAME') != '0400380020056000': return
+    src = ROOT / 'tools/engine/raiders'; host = nx / 'dm/host'
+    for name in ('hle_raiders_mods.c', 'dm_raiders_mods.h', 'dm_raiders_weapons.inc'):
+        data = (src / name).read_bytes()
+        if not (host / name).is_file() or (host / name).read_bytes() != data:
+            (host / name).write_bytes(data); print(f'  {name} copied')
+
+    dmh = host / 'dm.h'; s = dmh.read_text()
+    changed = False
+    names = ('OBS_RAIDERS_INK', 'OBS_RAIDERS_SHOOTER', 'OBS_RAIDERS_MOVE', 'OBS_RAIDERS_SHOOT_READY')
+    ids = {}
+    for name in names:
+        m = re.search(rf'\b{name}\s*=\s*(\d+)', s)
+        if m: ids[name] = int(m.group(1))
+    if len(ids) != len(names):
+        m = re.search(r'(?m)^(\s*)OBS_MAX\s*=\s*(\d+)\s*\};', s)
+        if not m: sys.exit(f'{dmh}: no OBS_MAX for Splatoon Raiders observation gates')
+        base = int(m.group(2)); ids = {name: base + i for i, name in enumerate(names)}
+        add = (f'{m.group(1)}OBS_RAIDERS_INK = {ids[names[0]]}, OBS_RAIDERS_SHOOTER = {ids[names[1]]},\n'
+               f'{m.group(1)}OBS_RAIDERS_MOVE = {ids[names[2]]}, OBS_RAIDERS_SHOOT_READY = {ids[names[3]]},   // (switch2mac) Splatoon Raiders host mods\n')
+        s = s[:m.start()] + add + f'{m.group(1)}OBS_MAX = {base + len(names)} }};' + s[m.end():]
+        changed = True
+    if 'int dm_guest_heap_readable(uint64_t addr, size_t len);' not in s:
+        anchor = 'int dm_guest_heap_read(uint64_t addr, void *out, size_t len);'
+        if anchor not in s: sys.exit(f'{dmh}: no guest heap read declaration for Splatoon Raiders mods')
+        s = s.replace(anchor, 'int dm_guest_heap_readable(uint64_t addr, size_t len);   // (switch2mac) contiguous guest heap range check\n' + anchor, 1)
+        changed = True
+    if changed: dmh.write_text(s); print('  dm.h: Splatoon Raiders observation gates and heap check')
+
+    patch = nx / 'dm/games/0400380020056000/patches.py'
+    patch.parent.mkdir(parents=True, exist_ok=True)
+    text = (src / 'patches.py.in').read_text()
+    for name, value in ids.items(): text = text.replace(f'@{name}@', str(value))
+    if '@OBS_RAIDERS_' in text: sys.exit(f'{src / "patches.py.in"}: unresolved observation gate')
+    if not patch.is_file() or patch.read_text() != text:
+        patch.write_text(text); print('  Splatoon Raiders: four v65536 observation gates')
+
+    di = host / 'dm_input.h'; s = di.read_text()
+    if 'void dm_input_current(' not in s:
+        m = re.search(r'(?m)^uint64_t dm_input_samples\(void\);[^\n]*', s)
+        if not m: sys.exit(f'{di}: no dm_input_samples anchor for Splatoon Raiders mods')
+        s = s[:m.end()] + '\nvoid dm_input_current(uint64_t *buttons, int32_t *lx, int32_t *ly);   // (switch2mac) non-consuming player-1 input for host mods' + s[m.end():]
+        di.write_text(s); print('  dm_input.h: dm_input_current for Splatoon Raiders mods')
+
+    hid = host / 'hle_hid.c'; s = hid.read_text()
+    if '#include "dm_raiders_mods.h"' not in s:
+        anchor = '#include "dm_input.h"\n'
+        if anchor not in s: sys.exit(f'{hid}: no dm_input.h include for Splatoon Raiders mods')
+        s = s.replace(anchor, anchor + '#include "dm_raiders_mods.h"   // (switch2mac)\n', 1)
+        hid.write_text(s)
+    s = hid.read_text()
+    if 'void dm_input_current(' not in s:
+        anchor = 'static void fill(NpadState *s, uint32_t id, uint32_t style) {'
+        helper = '''// (switch2mac) Current player-1 input without consuming a press latch: the
+// Splatoon Raiders flight hook reads it while checking the player object.
+void dm_input_current(uint64_t *buttons, int32_t *lx, int32_t *ly) {
+    *buttons = atomic_load(&g_btn) | atomic_load(&g_sc_btn) | atomic_load(&g_pad_btn[0]);
+    uint64_t k = atomic_load(&g_axes), p = atomic_load(&g_pad_axes[0]), c = atomic_load(&g_sc_axes);
+    *lx = pick(pick(ax(k, 0), ax(p, 0)), ax(c, 0));
+    *ly = pick(pick(ax(k, 1), ax(p, 1)), ax(c, 1));
+}
+
+'''
+        if anchor not in s: sys.exit(f'{hid}: no fill() anchor for Splatoon Raiders input')
+        s = s.replace(anchor, helper + anchor, 1)
+        hid.write_text(s); print('  hle_hid.c: current input for Splatoon Raiders flight')
+    s = hid.read_text()
+    if 'dm_raiders_mods_filter_input(&b' not in s:
+        anchor = '    if (atomic_load(&g_hold)) { b = 0; memset(a, 0, sizeof a); }   // an applet is in front: the game reads nothing (the latches were taken all the same)\n'
+        if anchor not in s: sys.exit(f'{hid}: no held-input line for Splatoon Raiders filtering')
+        s = s.replace(anchor, anchor + '    dm_raiders_mods_filter_input(&b, &a[0], &a[1]);   // (switch2mac) flight / swim input\n', 1)
+        hid.write_text(s); print('  hle_hid.c: Splatoon Raiders flight input filtering')
 
 
 def cheats_bundle(nx):   # seed bundled cheats into Application Support so the signed app itself is never modified

@@ -1,2 +1,2 @@
-S2M_ENGINE=nxnative-59fc8445a9bc
-S2M_BUILD=nxnative
+S2M_ENGINE=nxnative-untested
+S2M_SHARE=0

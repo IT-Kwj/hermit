@@ -1,0 +1,20 @@
+# Splatoon Raiders v65536 host-side mods, adapted from kirakira-dev/OunceNative
+# at c8785eb835a0 (MIT). All addresses belong to this exact owned executable.
+OBS = {
+    '663c2e087a083f05307f229dfc4042d5': [
+        (0x23f2980, @OBS_RAIDERS_INK@, 'd1185008',
+         'Raiders ink consumption: x0 = player logic + 0x614; original sub x8,x0,#0x614'),
+        (0x25099f8, @OBS_RAIDERS_SHOOTER@, 'f9401e68',
+         'Raiders shooter update after the repeat timer: x19 = PlayerInkActionShooter; original ldr x8,[x19,#0x38]'),
+        (0x250bfa0, @OBS_RAIDERS_SHOOT_READY@, 'd503237f',
+         'Raiders active shooter readiness entry: x0 = PlayerInkActionShooter; original pacibsp'),
+        (0x22ec3a4, @OBS_RAIDERS_MOVE@, 'a95b4ff4',
+         'Raiders movement completion: x28 = player logic + 0x5d8; original ldp x20,x19,[sp,#0x1b0]'),
+    ],
+}
+
+BINDING = [
+    {'what': 'Splatoon Raiders host-mod state gates', 'now': 'build', 'goal': 'build',
+     'purpose': 'runtime', 'why': 'the player, shooter, camera and ink layouts are executable-specific',
+     'checked': 'the gates run only for this exact v65536 main build and verify object types before writing'},
+]

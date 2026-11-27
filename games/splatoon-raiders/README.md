@@ -16,6 +16,20 @@ Built with [upstream nxnative](https://github.com/seedds/nxnative)'s own builder
 | Verified by nxnative | on an M4 Pro: about 4.5 minutes in the last session with no crash; median frame 16.6-16.9 ms (60 fps), about 15 ms of GPU on the beach |
 | Known | 16 GB Macs: memory grows past 14 GB and macOS starts swapping, down to about 1 fps (open, seedds/nxnative#1281). Turn MetalFX upscaling off if colours look washed out |
 
+## Host mods
+
+For the exact update `v65536` main build `663c2e087a083f05307f229dfc4042d5`, Hermit's `2` key settings panel has a **金手指** section:
+
+- 无限墨水
+- 快速射击
+- 飞行 / 穿墙
+- 任意地点游泳
+- 武器切换, including **恢复原始武器**
+
+These are host-side state hooks adapted from [kirakira-dev/OunceNative](https://github.com/kirakira-dev/OunceNative) at `c8785eb835a0` (MIT), not a generic Atmosphère `.txt`. Flight, swimming and weapon changes need the live player, camera and equipment objects, so a static cheat file cannot implement them reliably. The hooks verify the local player's object types before writing and do nothing if the build or one of the four observation gates does not match. The implementation and maintenance notes are in [`docs/splatoon-raiders-mods.md`](../../docs/splatoon-raiders-mods.md).
+
+Use them only in offline single-player. Disable every row to restore normal movement and equipment behaviour. The launch switches `DM_RAIDERS_MODS=ink,rapid,fly,swim` and `DM_RAIDERS_WEAPON=<row name>` remain available for diagnosis.
+
 ## Shared shader list
 
 [`shader_list.tsv`](shader_list.tsv): this game's own list of shaders and pipelines players have met, for this engine version only (its first line says which). It starts empty: when you close the game, the app offers to send what it built (every 100 new rows), as described in the main README's Contributing section.

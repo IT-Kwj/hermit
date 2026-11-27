@@ -89,7 +89,7 @@ def run(cmd, env=None, cwd=None):
 def prepare(g, sha, compile_host):   # the new engine with the front end added, checked; raises on anything that does not fit
     e = g['engine']; d = fetch(e['repo'], sha, e['kind']); env = dict(os.environ)
     if e['kind'] == 'nxnative':
-        say(run([py(), ROOT / 'tools/engine/patch.py', d]).rstrip())
+        say(run([py(), ROOT / 'tools/engine/patch.py', d], env=dict(env, DM_GAME=g['title_id'])).rstrip())
         if not (d / f'dm/games/{g["title_id"]}/game.tsv').is_file(): raise RuntimeError(f'the new commit has no profile for {g["title_id"]}')
         host, genv = d / 'dm/host', env
     elif e['kind'] == 'switch2mac':   # Hermit's own engine carries its front end already

@@ -6,6 +6,20 @@
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/CAMetalLayer.h>
 #include "dm.h"
+#if __has_include("dm_raiders_mods.h")
+#include "dm_raiders_mods.h"
+#else
+// The shared front end is copied into engines that do not carry the Raiders hooks.
+enum { DM_RAIDERS_INFINITE_INK = 1, DM_RAIDERS_RAPID_FIRE = 2, DM_RAIDERS_FLY = 4, DM_RAIDERS_SWIM = 8 };
+static inline int dm_raiders_mods_available(void) { return 0; }
+static inline unsigned dm_raiders_mods_get(void) { return 0; }
+static inline void dm_raiders_mods_set(unsigned flags) { (void)flags; }
+static inline unsigned dm_raiders_weapon_count(void) { return 0; }
+static inline const char *dm_raiders_weapon_family(unsigned index) { (void)index; return ""; }
+static inline const char *dm_raiders_weapon_label(unsigned index) { (void)index; return ""; }
+static inline unsigned dm_raiders_weapon_get(void) { return 0; }
+static inline void dm_raiders_weapon_set(unsigned index) { (void)index; }
+#endif
 #include <math.h>
 #include <sys/resource.h>
 #include <mach/mach.h>
@@ -14,7 +28,10 @@ static NSWindow *s_win; static CAMetalLayer *s_layer; static void (*s_release)(v
 
 // Performance overlay: a small box in the window's top-right corner, refreshed twice a second. Key 1 cycles it: compact (frame rate + the game's resolution) → detailed (the frame-rate
 // graph, frame time, GPU, CPU, memory, the game's pacing, the window's output size) → off → compact. DM_OVERLAY=compact | detailed | off picks the mode at start (default compact; the settings window writes it)
-uint64_t mtl_cur_frame(void); double mtl_gpu_ms(uint64_t f); int nvn_game_fps(void); void nvn_game_size(int *w, int *h);
+uint64_t mtl_gpu_ms(uint64_t f); int nvn_game_fps(void); void nvn_game_size(int *w, int *h);
+// Count the game's presented frames, not the NVN replay frame: some GL front ends (NARUTO's title and menus)
+// present without advancing the NVN queue's frame counter, which left the overlay at FPS 0.
+static uint64_t overlay_frame_count(void) { return dm_nvn_frame_count(); }
 uint64_t s2m_fg_shown(void);   // pictures shown after a generated frame (frame generation; 0 on an engine without it): patch.py adds it to nvn_mtl.m
 #define OV_N 60   // graph samples: 30 s
 static int g_ov_mode = 1;   // 0 off, 1 compact, 2 detailed
@@ -30,7 +47,7 @@ static int g_ov_mode = 1;   // 0 off, 1 compact, 2 detailed
     self.layer.borderWidth = 1; self.layer.borderColor = [NSColor colorWithWhite:1 alpha:0.14].CGColor;
     self.label = [NSTextField labelWithString:@""]; self.label.maximumNumberOfLines = 0; [self addSubview:self.label];
     self.build = [NSTextField labelWithString:@""]; [self addSubview:self.build];   // the build's name, at the right of the FPS line
-    _t0 = CACurrentMediaTime(); _f0 = mtl_cur_frame(); _gpu = -1;
+    _t0 = CACurrentMediaTime(); _f0 = overlay_frame_count(); _gpu = -1;
     __weak DmOverlay *w = self; [NSTimer scheduledTimerWithTimeInterval:0.5 repeats:YES block:^(NSTimer *t) { (void)t; [w tick]; }];
     return self;
 }
@@ -38,7 +55,7 @@ static int g_ov_mode = 1;   // 0 off, 1 compact, 2 detailed
 static double cpu_seconds(void) { struct rusage u; getrusage(RUSAGE_SELF, &u); return u.ru_utime.tv_sec + u.ru_stime.tv_sec + (u.ru_utime.tv_usec + u.ru_stime.tv_usec) / 1e6; }
 static double footprint_gb(void) { task_vm_info_data_t vi; mach_msg_type_number_t n = TASK_VM_INFO_COUNT; return task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)&vi, &n) == KERN_SUCCESS ? vi.phys_footprint / 1073741824.0 : 0; }
 - (void)tick {
-    double t = CACurrentMediaTime(), dt = t - _t0, cpu = cpu_seconds(); uint64_t f = mtl_cur_frame();
+    double t = CACurrentMediaTime(), dt = t - _t0, cpu = cpu_seconds(); uint64_t f = overlay_frame_count();
     if (dt <= 0) return;
     _fpsNow = f >= _f0 ? (f - _f0) / dt : 0;
     uint64_t fg = s2m_fg_shown(); _fgNow = fg >= _fg0 ? (fg - _fg0) / dt : 0; _fg0 = fg;
@@ -127,6 +144,65 @@ static NSUserDefaults *settings_store(void) {
     NSString *bid = NSBundle.mainBundle.bundleIdentifier ?: @"";
     return [bid hasPrefix:@"org.nxnative."] ? NSUserDefaults.standardUserDefaults : nil;   // the host inside the app: its bundle's domain, as the launcher's
 }
+static NSMutableDictionary<NSString *, NSString *> *g_chosen;   // (switch2mac) choices made in the panel this session: the panel shows them when it opens again
+static NSString *raiders_current_value(NSString *env) {   // (switch2mac) live state of the Splatoon Raiders host mods
+    unsigned flags = dm_raiders_mods_get();
+    if ([env isEqual:@"DM_RAIDERS_INFINITE_INK"]) return flags & DM_RAIDERS_INFINITE_INK ? @"1" : @"0";
+    if ([env isEqual:@"DM_RAIDERS_RAPID_FIRE"]) return flags & DM_RAIDERS_RAPID_FIRE ? @"1" : @"0";
+    if ([env isEqual:@"DM_RAIDERS_FLY"]) return flags & DM_RAIDERS_FLY ? @"1" : @"0";
+    if ([env isEqual:@"DM_RAIDERS_SWIM"]) return flags & DM_RAIDERS_SWIM ? @"1" : @"0";
+    if ([env isEqual:@"DM_RAIDERS_WEAPON"]) return [NSString stringWithFormat:@"%u", dm_raiders_weapon_get()];
+    return nil;
+}
+static NSArray<NSDictionary *> *raiders_setting_rows(void) {   // (switch2mac) only on the exact Raiders build with all four gates
+    if (!dm_raiders_mods_available()) return @[];
+    NSMutableArray *rows = [NSMutableArray array];
+    NSArray *defs = @[
+        @[@"DM_RAIDERS_INFINITE_INK", @"无限墨水", @"两个墨水槽保持满值；只在当前单人游戏内使用。"],
+        @[@"DM_RAIDERS_RAPID_FIRE", @"快速射击", @"取消射击间隔；不覆盖所有武器类型。"],
+        @[@"DM_RAIDERS_FLY", @"飞行 / 穿墙", @"按左摇杆方向、右摇杆视角移动；R 上升、L 下降、按下左摇杆加速。"],
+        @[@"DM_RAIDERS_SWIM", @"任意地点游泳", @"按住 ZL / Q / 鼠标右键时可在干燥地面和空中移动。"],
+    ];
+    for (NSArray *d in defs) [rows addObject:@{
+        @"env": d[0], @"kind": @"toggle", @"section": @"Cheats", @"label": d[1],
+        @"default": @"0", @"on": @"1", @"off": @"0", @"note": d[2], @"level": @"basic"
+    }];
+    NSMutableArray *options = [NSMutableArray arrayWithObject:@[@"0", @"恢复原始武器"]];
+    for (unsigned i = 1; i < dm_raiders_weapon_count(); i++) {
+        NSString *family = @(dm_raiders_weapon_family(i)), *label = @(dm_raiders_weapon_label(i));
+        NSString *text = family.length ? [NSString stringWithFormat:@"%@ %@", family, label] : label;
+        [options addObject:@[[NSString stringWithFormat:@"%u", i], text]];
+    }
+    [rows addObject:@{
+        @"env": @"DM_RAIDERS_WEAPON", @"kind": @"choice", @"section": @"Cheats", @"label": @"武器切换",
+        @"default": @"0", @"options": options,
+        @"note": @"选择后通过游戏自己的装备流程切换；选“恢复原始武器”会恢复覆盖前的装备。", @"level": @"basic"
+    }];
+    return rows;
+}
+static BOOL setting_live(NSString *env) {
+    return [env isEqual:@"DM_OVERLAY"] || [env isEqual:@"DM_FULLSCREEN"] || [env hasPrefix:@"DM_RAIDERS_"];
+}
+static BOOL raiders_choice_on(NSString *env) {
+    NSString *v = g_chosen[env] ?: [settings_store() stringForKey:[@"launcher." stringByAppendingString:env]];
+    return [v isEqual:@"1"];
+}
+static void raiders_restore_settings(void) {   // the panel's saved switches are not launcher.json rows, so apply them here
+    if (!dm_raiders_mods_available()) return;
+    NSUserDefaults *u = settings_store();
+    if (!getenv("DM_RAIDERS_MODS")) {
+        unsigned flags = 0;
+        if ([[u stringForKey:@"launcher.DM_RAIDERS_INFINITE_INK"] isEqual:@"1"]) flags |= DM_RAIDERS_INFINITE_INK;
+        if ([[u stringForKey:@"launcher.DM_RAIDERS_RAPID_FIRE"] isEqual:@"1"]) flags |= DM_RAIDERS_RAPID_FIRE;
+        if ([[u stringForKey:@"launcher.DM_RAIDERS_FLY"] isEqual:@"1"]) flags |= DM_RAIDERS_FLY;
+        if ([[u stringForKey:@"launcher.DM_RAIDERS_SWIM"] isEqual:@"1"]) flags |= DM_RAIDERS_SWIM;
+        dm_raiders_mods_set(flags);
+    }
+    if (!getenv("DM_RAIDERS_WEAPON")) {
+        NSString *v = [u stringForKey:@"launcher.DM_RAIDERS_WEAPON"];
+        if (v) dm_raiders_weapon_set((unsigned)[v integerValue]);
+    }
+}
 static NSColor *ui_accent(void) { return [NSColor colorWithCalibratedRed:80/255.0 green:1 blue:120/255.0 alpha:1]; }
 @interface DmFlipView : NSView
 @end
@@ -148,14 +224,18 @@ static void overlay_set(int mode);
 static NSTextField *panel_label(NSString *t, CGFloat size, NSFontWeight w, NSColor *c) {
     NSTextField *l = [NSTextField wrappingLabelWithString:t]; l.font = [NSFont systemFontOfSize:size weight:w]; l.textColor = c; l.drawsBackground = NO; return l;
 }
-static NSMutableDictionary<NSString *, NSString *> *g_chosen;   // (switch2mac) choices made in the panel this session: the panel shows them when it opens again
 static NSString *setting_value(NSDictionary *s) {   // what the panel shows: this session's choice, else the saved choice, else the value the game started with, else the default
     NSString *env = s[@"env"], *v = g_chosen[env] ?: [settings_store() stringForKey:[@"launcher." stringByAppendingString:env]];
     if (v) return v;
+    if ((v = raiders_current_value(env))) return v;
     const char *e = getenv(env.UTF8String); return e ? @(e) : s[@"default"];
 }
 static NSMutableSet<NSString *> *g_locked;   // (switch2mac) settings the launch environment or an env file fixed for this run (filled at attach)
-static NSString *setting_running(NSDictionary *s) { const char *e = getenv([s[@"env"] UTF8String]); return e ? @(e) : s[@"default"]; }   // the value this run uses
+static NSString *setting_running(NSDictionary *s) {
+    NSString *v = raiders_current_value(s[@"env"]);
+    if (v) return v;
+    const char *e = getenv([s[@"env"] UTF8String]); return e ? @(e) : s[@"default"];
+}   // the value this run uses
 static void settings_lock_scan(void) {
     // A variable set at start but not to the saved choice came from the launch environment or an env file: the launcher keeps those, so the panel cannot change it
     g_locked = [NSMutableSet set];
@@ -166,6 +246,10 @@ static void settings_lock_scan(void) {
         NSString *saved = [settings_store() stringForKey:[@"launcher." stringByAppendingString:s[@"env"]]];
         if (saved ? ![saved isEqual:@(e)] : ![@(e) isEqual:s[@"default"]]) [g_locked addObject:s[@"env"]];
     }
+    if (getenv("DM_RAIDERS_MODS"))
+        for (NSString *env in @[@"DM_RAIDERS_INFINITE_INK", @"DM_RAIDERS_RAPID_FIRE", @"DM_RAIDERS_FLY", @"DM_RAIDERS_SWIM"])
+            [g_locked addObject:env];
+    if (getenv("DM_RAIDERS_WEAPON")) [g_locked addObject:@"DM_RAIDERS_WEAPON"];
 }
 - (instancetype)initWithFrame:(NSRect)r {
     if (!(self = [super initWithFrame:r])) return nil;
@@ -179,14 +263,16 @@ static void settings_lock_scan(void) {
     NSStackView *st = [NSStackView stackViewWithViews:@[]]; st.orientation = NSUserInterfaceLayoutOrientationVertical; st.alignment = NSLayoutAttributeLeading; st.spacing = 8;
     st.edgeInsets = NSEdgeInsetsMake(18, 20, 18, 20);
     NSTextField *title = panel_label(@"设置", 20, NSFontWeightBold, NSColor.whiteColor);
-    NSTextField *sub = panel_label(@"按 2 或 Esc 关闭 · 悬浮层和显示模式即时生效，其余下次启动生效", 11, NSFontWeightMedium, ui_accent());
+    NSTextField *sub = panel_label(@"按 2 或 Esc 关闭 · 悬浮层、显示模式和金手指即时生效，其余下次启动生效", 11, NSFontWeightMedium, ui_accent());
     [st addArrangedSubview:title]; [st addArrangedSubview:sub];
     // (switch2mac) the rows a player needs first (the list's basic ones and the picture's upscaling), then the engine's tuning under "Advanced", folded
     NSMutableArray *main = [NSMutableArray array], *adv = [NSMutableArray array];
     for (NSDictionary *s in list) [([s[@"level"] isEqual:@"basic"] || [@[@"DM_UPSCALER", @"DM_PRESENT_UPSCALE"] containsObject:s[@"env"]] ? main : adv) addObject:s];
+    NSArray *raiders = raiders_setting_rows();
+    if (raiders.count) [main insertObjects:raiders atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, raiders.count)]];
     NSString *sec = nil;
     for (NSDictionary *s in main) {
-        NSString *sc = [s[@"section"] isEqual:@"Game"] ? @"显示" : [s[@"section"] isEqual:@"Controls"] ? @"控制" : @"性能";
+        NSString *sc = [s[@"section"] isEqual:@"Cheats"] ? @"金手指" : [s[@"section"] isEqual:@"Game"] ? @"显示" : [s[@"section"] isEqual:@"Controls"] ? @"控制" : @"性能";
         if (![sc isEqual:sec]) { sec = sc; NSTextField *h = panel_label(sc, 11, NSFontWeightBold, [NSColor colorWithWhite:0.6 alpha:1]); [st addArrangedSubview:h]; [st setCustomSpacing:4 afterView:h]; }
         [st addArrangedSubview:[self card:s]];
     }
@@ -197,7 +283,7 @@ static void settings_lock_scan(void) {
         [st addArrangedSubview:self.more];
         for (NSDictionary *s in adv) { NSView *c = [self card:s]; c.hidden = YES; [self.advanced addObject:c]; [st addArrangedSubview:c]; }
     }
-    if (!list.count) [st addArrangedSubview:panel_label(@"此应用中无设置列表（Resources/dm/launcher.json）。", 12, NSFontWeightRegular, NSColor.whiteColor)];
+    if (!list.count && !raiders.count) [st addArrangedSubview:panel_label(@"此应用中无设置列表（Resources/dm/launcher.json）。", 12, NSFontWeightRegular, NSColor.whiteColor)];
     NSScrollView *sv = [[NSScrollView alloc] initWithFrame:self.bounds]; sv.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     sv.drawsBackground = NO; sv.hasVerticalScroller = YES;
     NSView *doc = [[DmFlipView alloc] initWithFrame:NSMakeRect(0, 0, r.size.width, 10)]; [doc addSubview:st]; st.translatesAutoresizingMaskIntoConstraints = NO;   // flipped: the rows grow downward from the top, which stays in view
@@ -222,7 +308,7 @@ static void settings_lock_scan(void) {
         [sl.widthAnchor constraintEqualToConstant:150].active = YES; ctl = sl;
     } else { NSSwitch *w = [NSSwitch new]; w.state = [v isEqual:s[@"on"] ?: @"1"] ? NSControlStateValueOn : NSControlStateValueOff; ctl = w; }
     ctl.target = self; ctl.action = @selector(changed:); ctl.tag = (NSInteger)self.rows.count - 1;
-    BOOL live = [s[@"env"] isEqual:@"DM_OVERLAY"] || [s[@"env"] isEqual:@"DM_FULLSCREEN"];
+    BOOL live = setting_live(s[@"env"]);
     if (!live && [g_locked containsObject:s[@"env"]]) { ctl.enabled = NO; row.locked = YES; }   // set by how the game was started: a saved choice would be ignored
     NSString *n = s[@"note"]; row.note = panel_label(n ?: @"", 11, NSFontWeightRegular, [NSColor colorWithWhite:0.65 alpha:1]); row.note.hidden = !n.length;
     [self mark:row value:v];
@@ -251,11 +337,21 @@ static void settings_lock_scan(void) {
     LOG("front end: setting %s = %s (%s)", env.UTF8String, v.UTF8String, u ? "saved for the next launch" : "not saved: no app preferences");
     if ([env isEqual:@"DM_OVERLAY"]) overlay_set([v isEqual:@"off"] ? 0 : [v isEqual:@"detailed"] ? 2 : 1);
     if ([env isEqual:@"DM_FULLSCREEN"] && ([v isEqual:@"1"] != ((s_win.styleMask & NSWindowStyleMaskFullScreen) != 0))) [s_win toggleFullScreen:nil];
+    if ([env hasPrefix:@"DM_RAIDERS_INFINITE_INK"] || [env hasPrefix:@"DM_RAIDERS_RAPID_FIRE"] ||
+        [env hasPrefix:@"DM_RAIDERS_FLY"] || [env hasPrefix:@"DM_RAIDERS_SWIM"]) {
+        unsigned flags = 0;
+        if (raiders_choice_on(@"DM_RAIDERS_INFINITE_INK")) flags |= DM_RAIDERS_INFINITE_INK;
+        if (raiders_choice_on(@"DM_RAIDERS_RAPID_FIRE")) flags |= DM_RAIDERS_RAPID_FIRE;
+        if (raiders_choice_on(@"DM_RAIDERS_FLY")) flags |= DM_RAIDERS_FLY;
+        if (raiders_choice_on(@"DM_RAIDERS_SWIM")) flags |= DM_RAIDERS_SWIM;
+        dm_raiders_mods_set(flags);
+    }
+    if ([env isEqual:@"DM_RAIDERS_WEAPON"]) dm_raiders_weapon_set((unsigned)[v integerValue]);
 }
 // A row whose choice differs from what this run uses says so under its name (the overlay and display mode apply at once)
 - (void)mark:(DmPanelRow *)row value:(NSString *)v {
     NSString *env = row.s[@"env"], *n = row.s[@"note"] ?: @"";
-    BOOL live = [env isEqual:@"DM_OVERLAY"] || [env isEqual:@"DM_FULLSCREEN"], later = !live && ![v isEqual:setting_running(row.s)];
+    BOOL live = setting_live(env), later = !live && ![v isEqual:setting_running(row.s)];
     NSString *add = row.locked ? @"由本次启动设置（启动环境或 env.txt）固定，无法在此更改。"
                   : later ? @"已更改：下次启动游戏时生效。" : nil;
     NSString *t = add ? (n.length ? [NSString stringWithFormat:@"%@\n%@", n, add] : add) : n;
@@ -309,6 +405,7 @@ static void overlay_cycle(void) {
 void s2m_ui_attach(NSWindow *win, NSView *view, CAMetalLayer *layer, void (*release)(void), void (*resume)(void)) {
     s_win = win; s_layer = layer; s_release = release; s_resume = resume;
     settings_lock_scan();
+    raiders_restore_settings();
     const char *ov = getenv("DM_OVERLAY"); g_ov_mode = ov && !strcmp(ov, "off") ? 0 : ov && !strcmp(ov, "detailed") ? 2 : 1;
     g_ov = [[DmOverlay alloc] initWithFrame:NSMakeRect(0, 0, 10, 10)]; [view addSubview:g_ov]; [g_ov refreshWithCPU:0];
     void s2m_share_attach(NSWindow *win); s2m_share_attach(win);   // the shared shader list: contribution file and the offer to send it, when the game closes (s2m_share.m)
