@@ -1,0 +1,27 @@
+{
+ "title_id": "01003BC0000A0000",
+ "name": "Splatoon 2",
+ "version": "5.5.2",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v3342336"
+   ],
+   "version_names": {
+    "v3342336": "5.5.2"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "7ba2b149e060229b08144820ae4e6080a29275eb"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (5.5.2) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
