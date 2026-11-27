@@ -66,7 +66,7 @@
    "engine": {
     "kind": "macnativegames",
     "repo": "https://github.com/ly05010419/MacNativeGames",
-    "commit": "cebe72e0236e4efe6b48db1070e009705b2d6cfa"
+    "commit": "cae491f769223be1c8961bac8035fb58c9459fbc"
    },
    "watch": [
     "games/oot",
