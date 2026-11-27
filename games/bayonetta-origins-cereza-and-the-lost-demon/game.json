@@ -1,0 +1,27 @@
+{
+ "title_id": "0100CF5010FEC000",
+ "name": "Bayonetta Origins: Cereza and the Lost Demon",
+ "version": "1.0.0",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v0"
+   ],
+   "version_names": {
+    "v0": "1.0.0"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "649c6d76550630edb6b6d2fc02a9b88acf6b6e2a"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.0) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
