@@ -10,7 +10,7 @@ Built with [upstream nxnative](https://github.com/seedds/nxnative)'s own builder
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/0400245021D2C000`](https://github.com/seedds/nxnative/tree/faf91a9dfa16aaf75218f00af677aa78782656e7/dm/games/0400245021D2C000) |
+| Profile and notes | [nxnative `dm/games/0400245021D2C000`](https://github.com/seedds/nxnative/tree/93133c069ec57e076d4afae3161abf78d57e1cec/dm/games/0400245021D2C000) |
 | Engine | Unreal Engine 5.4.4, NVN2 |
 | Dump folder | `base/` (exefs, romfs) and `updates/131072/` (exefs, romfs: the whole RomFS, 20 GB). nxnative tested a NUP of the same files; Hermit builds from a dump folder |
 | Shaders | about 133,000 in the game. nxnative's runs built only the ones its playtests asked for; a build of all of them can take many hours |
