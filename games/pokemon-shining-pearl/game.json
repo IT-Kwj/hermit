@@ -1,0 +1,27 @@
+{
+ "title_id": "010018E011D92000",
+ "name": "Pokémon Shining Pearl",
+ "version": "1.3.0",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v393216"
+   ],
+   "version_names": {
+    "v393216": "1.3.0"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "05a370349b866cab97902abdc5d7ec5eaca363ea"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.3.0) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

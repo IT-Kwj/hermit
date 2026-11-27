@@ -26,7 +26,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "eed6ffc95a0f08e3a9419263ae740017e8e43f95"
+    "commit": "d2a2a43d7e17e1338fe11777e638b15f298675c1"
    },
    "shader_list": "shader_list-nxnative.tsv",
    "about": "Upstream nxnative with Hermit's overlay and key-2 settings: its own Switch 2 shader translator and shared terrain tiles (less memory). Suits M3 and newer.",
@@ -40,7 +40,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/MenAtCafe/mkw-neo",
-    "commit": "0c56cc4ef11c617ce326526d239529976711d817"
+    "commit": "33f89eb9d4472ef0d8c7cc4f81d8d6c7bd86b1ba"
    },
    "versions": [
     "v0"

@@ -1,0 +1,27 @@
+{
+ "title_id": "01006BB00800A000",
+ "name": "NARUTO SHIPPUDEN™: Ultimate Ninja® STORM 3 Full Burst",
+ "version": "1.0.1",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v65536"
+   ],
+   "version_names": {
+    "v65536": "1.0.1"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "e257bade588c987714d9b774b2206f366872f7f3"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.1) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

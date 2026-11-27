@@ -1,0 +1,25 @@
+{
+ "title_id": "0100CCF012E9A000",
+ "name": "ENDER LILIES: Quietus of the Knights",
+ "version": "1.1.5c",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v458752"
+   ],
+   "version_names": {},
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "15f1f15ffe53408d20eb0cf22d05d793ee920fa6"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.1.5c) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

@@ -2,7 +2,7 @@
 
 Title ID `010061D00DB74000`. A **Switch** game: built from your own copy's `.xci` / `.nsp` files with your own `prod.keys` (see [LEGAL.md](../../LEGAL.md)). Version 1.0.1.
 
-Built with [MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT): its [`games/ori`](https://github.com/ly05010419/MacNativeGames/tree/d6873a48c07b4abdad102554ae845883c8bc7083/games/ori) port, at the commit `game.json` names, run through that port's own builder as its README describes. Community port. The card image (.xci) that holds the 1.0.1 update, or a base game with the 1.0.1 update; your firmware for the system fonts. It has its own runtime, so Hermit's overlay and key-2 settings are not added: the port has its own. Needs Homebrew's `python@3.14`, `opus` and `libvpx`.
+Built with [MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT): its [`games/ori`](https://github.com/ly05010419/MacNativeGames/tree/17416fee1a8ab3e74042fb15cbca765cda609d88/games/ori) port, at the commit `game.json` names, run through that port's own builder as its README describes. Community port. The card image (.xci) that holds the 1.0.1 update, or a base game with the 1.0.1 update; your firmware for the system fonts. It has its own runtime, so Hermit's overlay and key-2 settings are not added: the port has its own. Needs Homebrew's `python@3.14`, `opus` and `libvpx`.
 
 ## Build
 

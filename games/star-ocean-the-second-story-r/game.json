@@ -1,0 +1,27 @@
+{
+ "title_id": "010065301A2E0000",
+ "name": "Star Ocean: The Second Story R",
+ "version": "1.1.0",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v196608"
+   ],
+   "version_names": {
+    "v196608": "1.1.0"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "a7aea546a6af1edd4bd2ad0dc24e918dc9171ad4"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.1.0) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}

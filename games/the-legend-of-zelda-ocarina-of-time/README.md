@@ -1,12 +1,12 @@
 # The Legend of Zelda: Ocarina of Time
 
-Title ID `0400486024DEC000`, update v131072. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/caa1ab48ff1bc57d8e7ee236ef352a1a3626f7fa/dm/games/0400486024DEC000) for how far it plays and on which Mac.
+Title ID `0400486024DEC000`, update v131072. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/41c5c8328d63de5ec0c5bbcccd467c2b9116ae32/dm/games/0400486024DEC000) for how far it plays and on which Mac.
 
 Built with nxnative's own builder at the commit `game.json` names (fetched once into `./engines`), with Hermit's front end added (`tools/engine/patch.py`): the game starts at once, **key 1** is the performance overlay and **key 2** the settings.
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/0400486024DEC000`](https://github.com/seedds/nxnative/tree/caa1ab48ff1bc57d8e7ee236ef352a1a3626f7fa/dm/games/0400486024DEC000) |
+| Profile and notes | [nxnative `dm/games/0400486024DEC000`](https://github.com/seedds/nxnative/tree/41c5c8328d63de5ec0c5bbcccd467c2b9116ae32/dm/games/0400486024DEC000) |
 | Dump folder | `base/` and `updates/131072/` |
 
 ## Shared shader list
@@ -45,7 +45,7 @@ Hermit builds it as it builds nxnative (`--engine kid-with-sword`), with the sam
 
 ## Fourth build: MacNativeGames
 
-[MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT) has its own port of this game, [`games/oot`](https://github.com/ly05010419/MacNativeGames/tree/3b0eae42f4924775056ccd74df35245ef13ef586/games/oot): its own runtime and Metal 4 renderer, not nxnative. Its author plays it on an M4 from the title into Kokiri Forest and the village, with saves read back on the next start; the whole game has not been played through. Standing in the village on an M4 it runs at about 81 fps at 720p (the default) and 65 fps at 1080p; busier places are slower (44-58 fps at 1080p, by its settings).
+[MacNativeGames](https://github.com/ly05010419/MacNativeGames) by ly05010419 (MIT) has its own port of this game, [`games/oot`](https://github.com/ly05010419/MacNativeGames/tree/afdda6fd641b389de56acf5ec5e851eb71d8c4f3/games/oot): its own runtime and Metal 4 renderer, not nxnative. Its author plays it on an M4 from the title into Kokiri Forest and the village, with saves read back on the next start; the whole game has not been played through. Standing in the village on an M4 it runs at about 81 fps at 720p (the default) and 65 fps at 1080p; busier places are slower (44-58 fps at 1080p, by its settings).
 
 It has its own settings on **key 1**, so Hermit's overlay and key-2 settings are not added: resolution and upscaler (MetalFX or the game's own network) while the game runs, handheld or docked quality, a frame lock (30 by default; off, 40, 60, 72, 90 or 120) and MetalFX frame interpolation (for example 50+50 on a 100 Hz screen). The title and opening movies always use MetalFX.
 
