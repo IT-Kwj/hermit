@@ -1,0 +1,27 @@
+{
+ "title_id": "0100354017668000",
+ "name": "A Little to the Left",
+ "version": "3.6.0",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v1179648"
+   ],
+   "version_names": {
+    "v1179648": "3.6.0"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "e1fbe4747b833c02afc157f42fe260c58b0a54dd"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (3.6.0) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
