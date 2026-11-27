@@ -11,7 +11,7 @@
    "engine": {
     "kind": "nxnative",
     "repo": "https://github.com/seedds/nxnative",
-    "commit": "40df4d9a15c1d218b3b959ce5780136cd7b746cf"
+    "commit": "db1599731739fc4947fc866b1aa0f16ffb925621"
    },
    "shader_list": "shader_list.tsv",
    "about": "nxnative's tested profile with Hermit's overlay and key-2 settings: 1.0.0, 1.0.1 or 1.2.1. 60 fps on an M1 Max."
