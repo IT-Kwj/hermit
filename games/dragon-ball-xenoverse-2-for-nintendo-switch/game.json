@@ -1,0 +1,27 @@
+{
+ "title_id": "010078D000F88000",
+ "name": "DRAGON BALL XENOVERSE 2 FOR NINTENDO SWITCH",
+ "version": "1.26.01",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v2621440"
+   ],
+   "version_names": {
+    "v2621440": "1.26.01"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "d67a69af13dc6905ed01abbfa684c04975d1013d"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.26.01) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
