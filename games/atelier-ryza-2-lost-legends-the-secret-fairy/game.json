@@ -1,0 +1,27 @@
+{
+ "title_id": "01009A9012022000",
+ "name": "Atelier Ryza 2: Lost Legends & the Secret Fairy",
+ "version": "1.0.7",
+ "console": "switch",
+ "check": "daily",
+ "builds": [
+  {
+   "id": "nxnative",
+   "name": "nxnative",
+   "versions": [
+    "v458752"
+   ],
+   "version_names": {
+    "v458752": "1.0.7"
+   },
+   "engine": {
+    "kind": "nxnative",
+    "repo": "https://github.com/seedds/nxnative",
+    "commit": "27f765ad332a3ee6dc86e67203ca3bb3c64aec8b"
+   },
+   "shader_list": "shader_list.tsv",
+   "about": "nxnative's profile (1.0.7) with Hermit's overlay and key-2 settings: see its notes for how far it plays."
+  }
+ ],
+ "disk_gb": 30
+}
