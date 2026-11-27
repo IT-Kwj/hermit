@@ -1,5 +1,5 @@
-# switch2mac shared shader list	game=0400380020056000	engine=nxnative-61ba3350de7d
-# Splatoon Raiders, built with nxnative at 61ba3350de7d. Added to nxnative's own seed list (its profile's pso_manifest.tsv) at build time; shipped in the app as pso_manifest.tsv.
+# switch2mac shared shader list	game=0400380020056000	engine=nxnative-28d41fc9d2a8
+# Splatoon Raiders, built with nxnative at 28d41fc9d2a8. Added to nxnative's own seed list (its profile's pso_manifest.tsv) at build time; shipped in the app as pso_manifest.tsv.
 # Rows: S<TAB>shader key<TAB>stage / C<TAB>compute shader key / R<TAB>render pipeline key (hex): identifiers and render state only, no game data. Row order = first-use order; do not sort.
 S	66a6b1d75f849d8c_b	1
 S	62f358694640f6de_b	0
