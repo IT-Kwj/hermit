@@ -10,7 +10,7 @@ Built with [upstream nxnative](https://github.com/seedds/nxnative)'s own builder
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/0400380020056000`](https://github.com/seedds/nxnative/tree/def4aca69cb823c37db76c3e92298791967c47f9/dm/games/0400380020056000) |
+| Profile and notes | [nxnative `dm/games/0400380020056000`](https://github.com/seedds/nxnative/tree/883bdf0fde1397f6e25924a47734442bf94bd378/dm/games/0400380020056000) |
 | Dump folder | `base/` and `updates/65536/` (the update RomFS is 13 GB) |
 | Shaders | about 27,000 |
 | Verified by nxnative | on an M4 Pro: about 4.5 minutes in the last session with no crash; median frame 16.6-16.9 ms (60 fps), about 15 ms of GPU on the beach |
