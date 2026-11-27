@@ -1,12 +1,12 @@
 # Xenoblade Chronicles X: Definitive Edition – Nintendo Switch 2 Edition
 
-Title ID `0400453019AA8001`, base game. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/fa07c09f1624a7227e35603d79ce7cbcc1d5ab1e/dm/games/0400453019AA8001) for how far it plays and on which Mac.
+Title ID `0400453019AA8001`, base game. Added automatically when [nxnative](https://github.com/seedds/nxnative) added its profile: see [nxnative's notes on it](https://github.com/seedds/nxnative/tree/eaa89abcf7866bf64a91de955c1c2d907dda81b5/dm/games/0400453019AA8001) for how far it plays and on which Mac.
 
 Built with nxnative's own builder at the commit `game.json` names (fetched once into `./engines`), with Hermit's front end added (`tools/engine/patch.py`): the game starts at once, **key 1** is the performance overlay and **key 2** the settings.
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/0400453019AA8001`](https://github.com/seedds/nxnative/tree/fa07c09f1624a7227e35603d79ce7cbcc1d5ab1e/dm/games/0400453019AA8001) |
+| Profile and notes | [nxnative `dm/games/0400453019AA8001`](https://github.com/seedds/nxnative/tree/eaa89abcf7866bf64a91de955c1c2d907dda81b5/dm/games/0400453019AA8001) |
 | Dump folder | `base/` (exefs and romfs) |
 
 ## Shared shader list
