@@ -1,0 +1,3 @@
+# switch2mac shared shader list	game=010055700CEA8000	engine=nxnative-afd401e26677
+# SD GUNDAM G GENERATION CROSS RAYS, built with nxnative at afd401e26677. Added to nxnative's own seed list (its profile's pso_manifest.tsv) at build time.
+# Rows: S<TAB>shader key<TAB>stage / C<TAB>compute shader key / R<TAB>render pipeline key (hex): identifiers and render state only, no game data. Row order = first-use order; do not sort.
