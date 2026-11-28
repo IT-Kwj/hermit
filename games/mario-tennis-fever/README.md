@@ -10,7 +10,7 @@ Built with [upstream nxnative](https://github.com/seedds/nxnative)'s own builder
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/0400D4201C6EA000`](https://github.com/seedds/nxnative/tree/89da762cc14ce386388554e1de7398761f097269/dm/games/0400D4201C6EA000) |
+| Profile and notes | [nxnative `dm/games/0400D4201C6EA000`](https://github.com/seedds/nxnative/tree/82bada1b75029f89782e9c7b0e81310304fddae4/dm/games/0400D4201C6EA000) |
 | Dump folder | `base/` and `updates/327680/` (the RomFS is 7.6 GB) |
 | Shaders | about 35,000 (nxnative ships 1,351 of them as a seed list); all translate |
 | Verified by nxnative | on an M4 Pro: Free Play singles on Stadium Court (Grass) with real rallies at 60 fps |
