@@ -10,7 +10,7 @@ Built with [upstream nxnative](https://github.com/seedds/nxnative)'s own builder
 
 | What | |
 |---|---|
-| Profile and notes | [nxnative `dm/games/04007EF01F8AE000`](https://github.com/seedds/nxnative/tree/fa07c09f1624a7227e35603d79ce7cbcc1d5ab1e/dm/games/04007EF01F8AE000) |
+| Profile and notes | [nxnative `dm/games/04007EF01F8AE000`](https://github.com/seedds/nxnative/tree/5cbfbfea707d9fd68b693c2aea21c3b1e70cceb0/dm/games/04007EF01F8AE000) |
 | Dump folder | `exefs/` and `romfs/` (no `base/` layout; the RomFS is 28 GB) |
 | Shaders | about 17,000 (nxnative ships 1,811 of them as a seed list) |
 | Frame rate | the game runs gameplay at 30 as shipped; nxnative sets 60, and **Frame rate** in the settings offers 120 |
