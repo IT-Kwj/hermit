@@ -740,6 +740,200 @@ GIT_CONFIG_VALUE_0=HTTP/1.1 \
 完整设计、构建注入流程、环境开关、维护方法、验证命令和版本升级注意事项
 记录在 [`splatoon-raiders-mods.md`](splatoon-raiders-mods.md)。
 
+#### 2026-11-27：构建并安装涂击队金手指版
+
+构建前发现 `hermit.py engine_build()` 调用 `tools/engine/patch.py` 时没有传递
+目标 Title ID，导致 Raiders 注入条件被跳过，普通 `build` 会得到不含金手指的
+App。已修复为：
+
+```python
+run([py(), ROOT / 'tools/engine/patch.py', nx], env=dict(e, DM_GAME=tid))
+```
+
+使用 `/Users/amid031799/Downloads/Mac编译/TJD` 和 `TJD/logo.png` 增量构建：
+
+- 27,190 个 Mac shader 全部复用
+- Prewarm：1,507 行、3 个文件、241.8 MB
+- App：18.7 GB
+- `dmhost` 已包含 `dm_raiders_mods_available`、`dm_raiders_mods_set`、
+  `dm_raiders_mods_filter_input` 和 `dm_raiders_weapon_set`
+- 严格签名检查通过，自定义图标已存在
+- 已安装到 `/Applications/Splatoon Raiders.app`
+- 安装清理释放 15.0 GB；磁盘可用约 34 GiB
+- 构建前后存档 SHA-256 均为
+  `859c38ede271e1029a2bf182ec90a1d31b7360eec2b38b8b33544d86be462ea0`
+- 按规则没有自动启动游戏；进入游戏后按 `2` 检查“金手指”区域
+
+#### 2026-11-27：修复游泳无效和切换武器闪退
+
+用户实测“任意地点游泳”无效，选择武器后游戏退出。日志定位到：
+
+```text
+FATAL SVC gate entered on its own gate stack: a gate handler ran guest code
+```
+
+武器切换在观察回调里直接调用游戏装备函数，而装备函数继续进入 SVC，触发
+nxnative 的 gate-stack 保护。修复后，调用装备函数前通过
+`dm_gate_nest_enter()` 临时降低当前线程的 SVC gate top，返回后由
+`dm_gate_nest_leave()` 恢复；该支持只注入 Raiders 构建。
+
+游泳另外修正为：
+
+- 同时接受 Z（ZL）和 Q；面板旧文案中的 Q/鼠标右键与实际映射不一致的问题
+  已修正为 Z 或 Q
+- 游泳激活时同时过滤普通左摇杆和肩键输入，避免游戏原移动逻辑抵消宿主位移
+- 游泳时 Q 只作为游泳触发，不再同时承担飞行下降
+
+验证结果：
+
+- ASan/UBSan 金手指单测通过
+- nxnative 补丁注册表 27 个测试通过
+- 27,190 个 Mac shader 全部复用
+- App 18.7 GB，严格签名通过，已重新安装到
+  `/Applications/Splatoon Raiders.app`
+- 安装清理释放 15.0 GB，磁盘可用约 30 GiB
+- 存档目录保留，安装后存档 SHA-256 为
+  `4f9b833e67238606b6bda17f1ad1826e938d9bdc0fe03f197824b9716dd3e3a1`
+- 已清除之前导致崩溃的已保存武器选择，下次启动使用游戏原装备
+- 按规则没有自动启动游戏
+
+#### 2026-11-27：飞行物理体修复与固定速度回退
+
+用户实测飞行时按 E 上升会上下弹跳。原因是宿主每帧抬升角色，但把四个物理体
+速度清零，游戏重力和落地状态在下一帧又把角色拉回。
+
+最终行为：
+
+- 飞行 R/L 升降恢复最初版本的即时输入，不再使用加速度曲线
+- 把相同方向的世界速度传给四个角色物理体，不再全部写零
+- 水平速度保持原来的 6 单位/秒，按住左摇杆仍为三倍
+- 游泳时不再固定使用启用瞬间的 Y；每帧读取游戏当前 Y，只驱动 X/Z，让游戏
+  碰撞系统继续处理地面和斜坡高度
+- 游泳恢复最初版本的即时固定速度 6 单位/秒，不加速、不滑行
+- 游泳中按 F 恢复原来的 3 倍速度，即 18 单位/秒
+- 松开 Z/Q 后立即停止宿主移动并恢复普通输入
+
+验证：
+
+- ASan/UBSan 金手指单测通过，测试覆盖 E 上升后的即时正竖直速度
+- 游泳测试覆盖 Z/Q 触发、即时 6 单位/秒、输入过滤和干燥地面 Y 不下降
+- 27 个 nxnative 补丁注册表测试通过
+- 已重新安装 `/Applications/Splatoon Raiders.app`，严格签名通过
+- 存档保留；安装后当前存档 SHA-256 为
+  `ac243c6c848f3dd5cb41f38c15820cab5ce799aea269a7de921afa6fa648ed75`
+- 本次安装没有自动启用飞行或游泳
+- 按规则没有自动启动游戏
+
+继续定位飞行弹跳后，再做一个仅限飞行的碰撞修正：
+
+- 飞行时把四个身体体都驱动到主碰撞体的中心位置，并把相同世界速度交给它们
+- 之前主碰撞体被抬高，而另外三个碰撞体仍留在低约 1 个游戏单位的位置，游戏
+  会用低处碰撞状态把角色拉回，产生视觉上的上下抽动
+- 游泳仍按原来的四个身体体处理，没有改动
+- 墨水、快速射击、武器切换、输入过滤和按键映射均未改动
+- 按住 E/Q 时每秒记录一次实际高度、目标高度和物理竖直速度，供后续诊断
+
+最终验证：
+
+- ASan/UBSan 金手指单测通过，飞行测试确认四个碰撞体都跟随主碰撞中心
+- nxnative 补丁注册表 27 个测试通过
+- 已安装 `/Applications/Splatoon Raiders.app`，严格签名通过
+- 存档保留；当前 SHA-256 为
+  `ec9929a2e25935e3bc307be5bd4fac29182711d69714b75e6a7c50568656135f`
+- `DM_RAIDERS_FLY` 保持开启，方便直接复测
+- 按规则没有自动启动游戏
+
+实机复测仍会上下跳后，继续定位到角色层级：
+
+- `collision+0x7438` 指向角色包装器，包装器 `+8` 是 `character` 聚合对象
+- `character+0x20` 是其 `body0`；游戏自己的传送路径 `main+246d75c`
+  先定位 `character`，再定位 `body1` 到 `body3`
+- 旧金手指直接定位 `body0`，但顶层 `character` 仍停留在地面，下一帧物理
+  更新会由顶层把 `body0` 拉回，因此表现为持续上下跳
+- 修复仅改变飞行分支：飞行时按游戏自身传送顺序定位 `character` 和
+  `body1` 到 `body3`，不再单独驱动 `body0`
+- 游泳分支、墨水、快速射击、武器切换和输入过滤均未改动
+- ASan/UBSan 单测已更新并通过；nxnative 补丁注册表 27 个测试通过
+- 已重新构建并安装到 `/Applications/Splatoon Raiders.app`，严格签名检查通过
+- App 18.7 GB；27,190 个 shader 全部复用，Prewarm 1,507 行
+- 构建前后存档 SHA-256 均为
+  `00797c6e8c3b03b558a42964aa2cffee8fc3ee480ae061f3b809d3fc3b670509`
+- 构建后磁盘可用约 14 GiB
+- 实机打开飞行开关后立即崩溃，日志为：
+  `FATAL SVC gate entered on its own gate stack`
+- 原因是新调用的 `character` 定位函数内部会继续进入游戏 SVC，而观察回调本身
+  已经位于专用 SVC gate 栈；普通物理体的定位不会走这段嵌套路径
+- 修复只包裹 `character` 定位调用：先 `dm_gate_nest_enter()` 临时降低 gate
+  top，调用返回后立即 `dm_gate_nest_leave()`；`body1` 到 `body3` 和游泳路径
+  均保持不变
+- 修复版重新构建并安装：27,190 个 shader 全部复用，ASan/UBSan 单测和
+  27 个补丁注册表测试通过，严格签名通过
+- 修复后存档 SHA-256 为
+  `4a8a3cefb78aad8f9fa2f95e296232e09c2860f6ac65363ec125aed4c8d47a01`
+- 为避免再次启动即崩，旧包中保存的 `launcher.DM_RAIDERS_FLY` 曾改为 `0`；
+  新包启动后需手动重新打开飞行开关，再按住 E 复测是否仍上下跳
+- 实机再次打开飞行后画面冻结、FPS 为 0。`sample` 显示游戏主线程停在
+  `dm_gate -> svc_thread_impl -> WaitForAddress`，证明 `character` 定位函数
+  会在移动回调末尾等待一个只有主线程继续推进才能满足的条件，形成自锁
+- 不再从观察回调调用 `character` 定位函数；飞行改为在移动函数入口应用，
+  直接写入四个物理体的当前变换和插值变换两处 X/Y/Z
+- 每个物理体相对角色的偏移在进入飞行时捕获，之后随角色目标位置保持相对
+  几何关系，避免把不同大小的碰撞体强行放到同一点
+- 物理体原有的快速位置发布和速度接口仍保留；游泳、墨水、快速射击、武器
+  切换及输入过滤均未改动
+- 新方案 ASan/UBSan 单测和 27 个补丁注册表测试已通过；构建与实机复测待进行
+- 旧包的 `launcher.DM_RAIDERS_FLY` 已再次改为 `0`，避免启动后立即复现卡死
+- 构建时 GitHub 的 `git fetch` 两次连接超时；改用 GitHub codeload 的固定提交
+  `ef8b25d2c5a8a37588ebc1bf1785a56468900688` 源码快照，校验目录后继续构建
+- 新飞行钩子位于 `main+22ec264`，原完成钩子 `main+22ec3a4` 已恢复为原始
+  `a95b4ff4`；安装包中的两处字分别为 `14b566dc` 和 `a95b4ff4`
+- 最终构建：27,190 个 shader 全部复用，App 18.7 GB，严格签名检查通过
+- 已安装到 `/Applications/Splatoon Raiders.app`，构建前后存档 SHA-256 均为
+  `de6d776dd09aef22dc061e5eb953d5d135644015534c2d4389b1806f27f395ce`
+- 构建结束后磁盘可用约 13 GiB；引擎源码快照保留约 893 MiB，便于网络再次
+  不稳定时复测，不在本次删除
+- `launcher.DM_RAIDERS_FLY` 仍为 `0`，需进入游戏后手动打开再做实机复测
+- 实机确认物理体已抬到 Y≈8.96–9.57，但角色根仍被 `main+24368e4`
+  从 `player+8` 的 `shape+0x2bc` 复制回地面坐标；因此仅改物理体仍会回跳
+- 新增飞行完成钩子 `OBS_RAIDERS_FINISH`，位置在 `main+24368e4`，在游戏完成
+  根坐标复制后同步 `shape+0x2bc` 和 `player+0x10`
+- 完成钩子仅对本地玩家且仅飞行模式启用；游泳仍走游戏原位置逻辑
+- 最新构建验证：27,190 个 shader 复用，ASan/UBSan 单测和 27 个补丁测试通过，
+  App 18.7 GB、严格签名通过
+- 最新安装后的钩子字：`22ec264=14b566dc`、`22ec3a4=a95b4ff4`、
+  `24368e4=14b03d47`
+- 构建前后存档 SHA-256 均为
+  `6378dd41da35ba93c8e3436ce897091045a818771d7f27c649776ffe5f77e0eb`
+- 安装后飞行偏好为 `1`，进入场景可直接按住 E 复测
+- 实机确认飞行不再回跳，但上升/下降约只有 1.5 游戏单位/秒且呈阶梯感。
+  原因是移动回调频率低于渲染帧，旧积分把每次 `dt` 截断到 50 ms，目标位置
+  也只在移动回调时更新
+- 飞行积分移到每帧位置完成钩子：使用真实帧间隔（上限 250 ms）连续推进
+  `g_fly_position`，并在同一钩子更新四个物理体变换和玩家根坐标
+- 游泳保留原路径和 50 ms 积分上限，不改为每帧推进
+- 新平滑积分方案的 ASan/UBSan 单测及 27 个补丁注册表测试已通过；构建和实机
+  复测待进行
+- 平滑积分版已重新构建并安装：27,190 个 shader 全部复用，App 18.7 GB，
+  严格签名通过；三个钩子字仍为 `14b566dc`、`a95b4ff4`、`14b03d47`
+- 构建前后存档 SHA-256 均为
+  `fb8d79ddb9b9f558335beb60cf43f7c17d01da03a4e7ee72124fe7edc8aac8db`
+- 安装后磁盘可用约 11 GiB；飞行开关需进入游戏后按当时保存状态检查
+- 尚待实机确认上升/下降速度是否达到约 6 单位/秒且不再一顿一顿
+
+#### 2026-11-27：Splatoon Raiders App 分包压缩
+
+- 先删除 `work/0400380020056000/shader/cache`（约 13 GiB，可重新生成的
+  shader 缓存），保留当前 App、存档、ROM 和构建所需的其他缓存
+- 使用 `zip -y -r -s 3g` 从 `/Applications/Splatoon Raiders.app` 生成
+  3 GiB 分卷：`Splatoon Raiders.z01` 至 `.z05`，最后 `.zip` 约 514 MiB
+- 上传目录：`/Users/amid031799/Downloads/Mac编译/Splatoon Raiders upload`
+- 已生成 `Splatoon Raiders.sha256`，6 项逐项校验均为 `OK`
+- 已添加上传图片 `加微信进群获取免费更新，请备注mac原生游戏.png`
+- `解压说明.txt` 使用既定中文模板，文件名改为 Splatoon Raiders，分卷范围
+  改为 `.z01` 至 `.z05`
+- 分包压缩总计约 16 GiB；压缩后磁盘可用约 11 GiB
+- 没有删除 `/Applications/Splatoon Raiders.app`、存档或游戏 ROM
+
 ## 2j. 火影忍者 终极风暴羁绊（亚洲版临时配置）
 
 2026-11-27 使用 `/Users/amid031799/Downloads/Mac编译/HY` 的亚洲版文件构建：
@@ -900,6 +1094,115 @@ work/restorepoints/naruto-zh-fps-20261127-1351/
 
 这是 provisional profile：可能启动失败，或进入游戏后出现渲染/服务问题。
 后续若上游加入该亚洲版/1.6.0 专用配置，应优先切回官方配置。
+
+#### 2026-11-28：火影忍者 1.6.0 原生 60 帧
+
+使用亚洲版 1.6.0 文件重新构建，主程序 Build ID：
+`a281486f065593a24ae95be37f66530b`。
+
+- 临时 profile：`work/naruto60-profile/0100D010190A8000`
+- 上游 1.7.1 的 `startup`、开机 logo 和 rate setter 函数在 1.6.0 main 中精确匹配
+- 应用四处 `CUTS`：
+  - `0xe121e8`：startup 传入 60 fps
+  - `0x8781ac`、`0x8781bc`、`0x8781f0`：开机 logo 半 tick 计时
+- 1.6.0 的 Scaleform 阶段选择器函数结构与 1.7.1 不同，没有强行套用上游的阶段选择器
+  30/60 切换 stub；本版先保留原有阶段选择器路径
+- 额外补充 387 个 OpenGL UI shader，生成 `msl/gl/gl_shaders.metallib`
+  和 `gl_shaders.tsv`
+- 570 个 NVN shader 和 387 个 GL shader 全部成功
+- 构建目录：`work/naruto60-build`
+- 成品约 14.0 GB，已移动到
+  `/Applications/火影忍者 终极风暴羁绊.app`
+- 已确认 App 名称、简体中文默认语言、严格签名和 GL shader 资源
+- 构建没有自动启动游戏；阶段选择器在 60 帧下的输入行为尚需实机确认
+- 实机播放过场时出现明显视频和声音卡顿。运行日志显示单帧约 333 ms，而 GPU
+  只有约 0.5 ms、音频 `0 underruns`；同一段日志新增编译 18 个 Metal pipeline
+  bases，编译总计约 537 ms，其中 11 次绘制等待编译、累计约 160.7 ms。根因是
+  首次遇到管线时的实时编译，不是音频设备欠载或 GPU 负载过高
+- 实机运行生成的 30 条管线记录已复制到临时 profile 的
+  `pso_manifest.tsv`：17 条 shader 和 13 条 render-pipeline
+- 重新应用 `tools/engine/patch.py`，恢复 Hermit 中文启动页、2 键设置面板和
+  中文标签；成品 `dmhost` 含 `s2m_ui_attach`、`s2m_ui_key`、`s2m_share_attach`
+- 增量重建复用 570 个 NVN shader 和 387 个 GL shader，重新编译 host，并生成
+  13 条 render pipeline 的 1.0 MB 预热 archive；App 内保留完整 30 条
+  `pso_manifest.tsv`
+- 最终 App 约 14.0 GB，`Info.plist` 名称是“火影忍者 终极风暴羁绊”、默认语言
+  `zh-Hans`；4 处 60 fps `CUTS`、GL shader 库、中文 UI 和 pipeline archive
+  均已核验，ad-hoc 深度签名校验通过
+- 已覆盖安装到 `/Applications/火影忍者 终极风暴羁绊.app`；原包仅作为安装回滚
+  点短暂保留，安装校验后已删除。存档支持目录
+  `~/Library/Application Support/nxnative/0100D010190A8000` 保留未动
+- 启动页仍有英文的原因不是 `launcher.json` 没汉化，而是 `hermit.py` 的兼容性
+  检查只接受完全一致的 `func apply()`。这个引擎已改成
+  `func apply(persist: Bool = true)`，检查因此误判为“不支持”，一直退回 nxnative
+  自带的英文 `Launcher.swift`。检查条件改为 `func apply(` 后，Hermit 的完整中文
+  “准备开玩”窗口已正确替换
+- 旧版 nxnative launcher 还要求 `dm_mac_record_launch_keys` C 桥接符号；中文
+  Swift 窗口补上兼容实现，只记录启动环境中已经设置过的设置名
+- nxnative 的 `PrewarmUpload` 默认开启，会在启动时把 `pso_user.tsv`、Title ID
+  和版本 POST 到 `script.google.com`。自定义 launcher 没有显示关闭开关，用户因此
+  无法阻止请求。现在 Mac launcher 已移除自动 `dm_prewarm_upload_schedule()` 调用，
+  `pack_app.py` 也不再默认写入 `DMPrewarmUploadURL`，只有显式设置
+  `DM_PREWARM_UPLOAD_URL` 的诊断构建才会保留上传 endpoint
+- `NSBluetoothAlwaysUsageDescription` 已改为中文：“通过蓝牙连接 Switch 2
+  Joy-Con 和 Pro 手柄。”
+- 过场和启动动画约 3–4 fps 的根因定位到错误的 60 fps 机器码：
+  `81070052` 解码为 `eor w1, w28, #3`，不是预期的 `mov w1, #60`。正确
+  little-endian 字节为 `81078052`；临时 profile 的 `patches.py` 已修正
+- 修正后重新构建并安装 `/Applications/火影忍者 终极风暴羁绊.app`：570 个 NVN
+  shader 和 387 个 GL shader 复用，30 条 pipeline 记录保留，App 约 14.1 GB，
+  `main.patched.bin` 在 `0xe121e8` 已核验为 `81078052`，严格签名通过
+- 新 `Info.plist` 已没有 `DMPrewarmUploadURL`；构建后仍需实机确认启动页是否全部
+  为中文、点击“开始游戏”后是否不再请求 Google，以及启动动画是否恢复接近 60 fps
+- 上述重建漏传了 `--cheats`，所以新 App 起初缺少火影金手指。已从
+  `Downloads/Mac编译/HY/A281486F065593A2.txt` 补回：
+  `Contents/Resources/cheats/A281486F065593A2.txt` 和运行目录
+  `Application Support/nxnative/0100D010190A8000/cheats/A281486F065593A2.txt`
+  的 SHA-256 均为 `4ea37fc82d4ad604115cd6e1a089405533ba92ee35494fd890d5da6ebb73a287`
+- 加入资源后已对 `/Applications/火影忍者 终极风暴羁绊.app` 重新做 ad-hoc
+  深度签名并校验通过。以后重新构建火影时必须同时传入
+  `--cheats "/Users/amid031799/Downloads/Mac编译/HY/A281486F065593A2.txt"`，
+  或者在安装后按同一路径恢复包内和运行目录两份文件
+
+#### 2026-11-28：火影忍者 1.6.0 中文 60 fps 金手指版分包
+
+- 从当前 `/Applications/火影忍者 终极风暴羁绊.app` 使用
+  `zip -y -r -s 3g` 生成 3 GiB 分卷，避免把 App 内符号链接展开成重复数据
+- 上传目录：
+  `/Users/amid031799/Downloads/Mac编译/火影忍者 1.6.0 60FPS 中文金手指版 upload`
+- 分卷基名为 `Naruto Storm Connections 1.6.0 60FPS Chinese Cheats`，
+  `.z01` 至 `.z04` 加最后 `.zip`，共 5 个数据文件；整个上传目录约 14 GB
+- 上传目录已放入 `加微信进群获取免费更新，请备注mac原生游戏.png`
+- `解压说明.txt` 严格按 `docs/templates/解压说明模板.txt` 生成，只替换标题、
+  分卷基名、`.z01` 至 `.z04`、SHA-256 文件名和 App 文件名
+- 5 个分卷的 `.sha256` 逐项校验全部为 `OK`
+- 使用 `7zz t` 直接读取原始分卷，全量数据校验通过；包内存在
+  `Contents/Resources/cheats/A281486F065593A2.txt`，`aoc`、`romfs.img`、
+  `msl`、`pso` 四个符号链接均保留
+- macOS 自带的 `zip -s 0` 在合并这份含 14.9 GB Zip64 条目的分卷时生成了
+  不完整的临时 ZIP，导致 `unzip -t` 误报；临时文件已删除，原始分卷未受影响。
+  以后验证此类大分卷使用 `7zz t`，不要用系统 `zip -s 0` 的合并结果判断
+- 分包校验完成后按用户要求删除 `/Applications/火影忍者 终极风暴羁绊.app`、
+  `work/naruto60-build`、`work/naruto60-profile`、`work/naruto-survey`、
+  `work/naruto-survey2` 以及引擎专用的
+  `dm/host/gen/0100D010190A8000` 编译对象；逻辑占用约 30 GB
+- `Downloads/Mac编译` 保持不动，删除前后均为约 72 GB；其中 `HY`、金手指源文件
+  和火影分包上传目录均保留。运行时目录
+  `Application Support/nxnative/0100D010190A8000` 约 11 MB 也保留，未删除存档、
+  金手指运行状态或 shader/pipeline 记录
+- 删除后磁盘可用空间从约 35 GiB 增至约 52 GiB；APFS 克隆使实际释放量小于
+  逻辑占用
+
+#### 2026-11-28：删除龙珠游戏和构建/运行时缓存
+
+- 删除 `/Applications/DRAGON BALL - Sparking! ZERO.app`（约 8.9 GiB）
+- `work/010035F022078000*` 构建目录已不存在，无需额外删除
+- 删除运行时缓存 `Application Support/nxnative/010035F022078000/pso_archive`、
+  `pso_user.tsv` 和空 `temp` 目录
+- 保留 `Mac编译/LZ` 原始文件夹、金手指源文件、`logo.png`、游戏存档
+  `save` / `save.work`、金手指运行副本和 `shader-list-contribution.txt`
+- 未触碰其他游戏的 App、存档或构建缓存
+- 删除后磁盘可用空间约 35 GiB
 
 ## 3. 游戏图标（每次构建必做）
 

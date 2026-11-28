@@ -82,11 +82,33 @@ def main():
     settings_rows_zh(nx)
     game_marks_zh(nx)
     pokopia_language_zh(nx)
+    opt_out_prewarm_upload(nx)
     raiders_mods(nx)
     hle_net_poll(nx)
     no_lag_pso_batch(nx)
     cheats_bundle(nx)
     cheats_zh(nx)
+
+
+def opt_out_prewarm_upload(nx):   # switch2mac: never send pso_user.tsv to the nxnative Apps Script inbox without an explicit opt-in
+    path = nx / 'dm/mac/launcher.c'; s = path.read_text()
+    old = '    dm_prewarm_upload_schedule();\n'
+    new = '    // (switch2mac) automatic prewarm upload is off; DM_PREWARM_UPLOAD_URL may opt a future diagnostic build in\n'
+    if old in s:
+        path.write_text(s.replace(old, new, 1)); print('  launcher.c: automatic prewarm upload off')
+
+    path = nx / 'dm/mac/pack_app.py'; s = path.read_text()
+    old_arg = ("    ap.add_argument('--prewarm-upload-url', default=os.environ.get('DM_PREWARM_UPLOAD_URL',\n"
+               "                    endpoint.read_text(encoding='utf-8').strip() if endpoint.is_file() else None))\n")
+    new_arg = ("    ap.add_argument('--prewarm-upload-url', default=os.environ.get('DM_PREWARM_UPLOAD_URL'))   "
+               "# (switch2mac) upload endpoint only when explicitly requested\n")
+    changed = False
+    if old_arg in s: s = s.replace(old_arg, new_arg, 1); changed = True
+
+    old_bt = "'NSBluetoothAlwaysUsageDescription': 'Connect Switch 2 Joy-Con and Pro Controllers over Bluetooth.',"
+    new_bt = "'NSBluetoothAlwaysUsageDescription': '通过蓝牙连接 Switch 2 Joy-Con 和 Pro 手柄。',"
+    if old_bt in s: s = s.replace(old_bt, new_bt); changed = True
+    if changed: path.write_text(s); print('  pack_app.py: prewarm upload opt-in; Chinese Bluetooth prompt')
 
 
 def raiders_mods(nx):
@@ -100,7 +122,7 @@ def raiders_mods(nx):
 
     dmh = host / 'dm.h'; s = dmh.read_text()
     changed = False
-    names = ('OBS_RAIDERS_INK', 'OBS_RAIDERS_SHOOTER', 'OBS_RAIDERS_MOVE', 'OBS_RAIDERS_SHOOT_READY')
+    names = ('OBS_RAIDERS_INK', 'OBS_RAIDERS_SHOOTER', 'OBS_RAIDERS_MOVE', 'OBS_RAIDERS_SHOOT_READY', 'OBS_RAIDERS_FINISH')
     ids = {}
     for name in names:
         m = re.search(rf'\b{name}\s*=\s*(\d+)', s)
@@ -108,17 +130,64 @@ def raiders_mods(nx):
     if len(ids) != len(names):
         m = re.search(r'(?m)^(\s*)OBS_MAX\s*=\s*(\d+)\s*\};', s)
         if not m: sys.exit(f'{dmh}: no OBS_MAX for Splatoon Raiders observation gates')
-        base = int(m.group(2)); ids = {name: base + i for i, name in enumerate(names)}
-        add = (f'{m.group(1)}OBS_RAIDERS_INK = {ids[names[0]]}, OBS_RAIDERS_SHOOTER = {ids[names[1]]},\n'
-               f'{m.group(1)}OBS_RAIDERS_MOVE = {ids[names[2]]}, OBS_RAIDERS_SHOOT_READY = {ids[names[3]]},   // (switch2mac) Splatoon Raiders host mods\n')
-        s = s[:m.start()] + add + f'{m.group(1)}OBS_MAX = {base + len(names)} }};' + s[m.end():]
+        base = int(m.group(2))
+        if ids:   # upgrade an engine already carrying the first four Raiders gates
+            finish = max(ids.values()) + 1
+            ids[names[4]] = finish
+            add = f'{m.group(1)}OBS_RAIDERS_FINISH = {finish},   // (switch2mac) player-position completion gate\n'
+            s = s[:m.start()] + add + f'{m.group(1)}OBS_MAX = {max(base, finish + 1)} }};' + s[m.end():]
+        else:
+            ids = {name: base + i for i, name in enumerate(names)}
+            add = (f'{m.group(1)}OBS_RAIDERS_INK = {ids[names[0]]}, OBS_RAIDERS_SHOOTER = {ids[names[1]]},\n'
+                   f'{m.group(1)}OBS_RAIDERS_MOVE = {ids[names[2]]}, OBS_RAIDERS_SHOOT_READY = {ids[names[3]]},\n'
+                   f'{m.group(1)}OBS_RAIDERS_FINISH = {ids[names[4]]},   // (switch2mac) Splatoon Raiders host mods\n')
+            s = s[:m.start()] + add + f'{m.group(1)}OBS_MAX = {base + len(names)} }};' + s[m.end():]
         changed = True
     if 'int dm_guest_heap_readable(uint64_t addr, size_t len);' not in s:
         anchor = 'int dm_guest_heap_read(uint64_t addr, void *out, size_t len);'
         if anchor not in s: sys.exit(f'{dmh}: no guest heap read declaration for Splatoon Raiders mods')
         s = s.replace(anchor, 'int dm_guest_heap_readable(uint64_t addr, size_t len);   // (switch2mac) contiguous guest heap range check\n' + anchor, 1)
         changed = True
+    if 'uint64_t dm_gate_nest_enter(void);' not in s:
+        anchor = 'int dm_guest_heap_readable(uint64_t addr, size_t len);   // (switch2mac) contiguous guest heap range check\n'
+        if anchor not in s: sys.exit(f'{dmh}: no Raiders heap declaration for nested gate calls')
+        s = s.replace(anchor, anchor +
+                      'uint64_t dm_gate_nest_enter(void);   // (switch2mac) temporary lower top for guest code called from an observation callback\n'
+                      'void dm_gate_nest_leave(uint64_t saved_top);\n', 1)
+        changed = True
     if changed: dmh.write_text(s); print('  dm.h: Splatoon Raiders observation gates and heap check')
+
+    tc = host / 'thread.c'; s = tc.read_text()
+    if 'uint64_t dm_gate_nest_enter(void)' not in s:
+        anchor = 'void dm_gate_nested(uint64_t sp) { die("SVC gate entered on its own gate stack (sp %#llx): a gate handler ran guest code", (unsigned long long)sp); }\n'
+        helper = '''
+// (switch2mac) Let a Raiders observation callback call the game's own equipment
+// function. The nested SVC uses a temporary top below the callback's C frames;
+// the per-thread normal top is restored as soon as that guest call returns.
+uint64_t dm_gate_nest_enter(void) {
+    uintptr_t stub = (uintptr_t)pthread_getspecific(g_keygate);
+    if (!stub) return 0;
+    int64_t slot = (int64_t)((stub - (uintptr_t)dm_gate_stubs) / 16);
+    if (slot < 0 || slot >= GATE_SLOTS) return 0;
+    uintptr_t top = (uintptr_t)dm_gate_top[slot];
+    uintptr_t here = (uintptr_t)__builtin_frame_address(0);
+    const uintptr_t reserve = 256 << 10;
+    if (!top || here >= top || top - here >= GATE_STACK_SIZE) return 0;
+    if (here < top - GATE_STACK_SIZE + reserve + 0x10000) return 0;
+    dm_gate_top[slot] = (uint64_t)((here - reserve) & ~15ull);
+    return top;
+}
+
+void dm_gate_nest_leave(uint64_t saved_top) {
+    uintptr_t stub = (uintptr_t)pthread_getspecific(g_keygate);
+    if (!stub || !saved_top) return;
+    int64_t slot = (int64_t)((stub - (uintptr_t)dm_gate_stubs) / 16);
+    if (slot >= 0 && slot < GATE_SLOTS) dm_gate_top[slot] = saved_top;
+}
+'''
+        if anchor not in s: sys.exit(f'{tc}: no dm_gate_nested anchor for Splatoon Raiders nested calls')
+        tc.write_text(s.replace(anchor, anchor + helper, 1))
+        print('  thread.c: temporary nested SVC gate top for Raiders weapon calls')
 
     patch = nx / 'dm/games/0400380020056000/patches.py'
     patch.parent.mkdir(parents=True, exist_ok=True)

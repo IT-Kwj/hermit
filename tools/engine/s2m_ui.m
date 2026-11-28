@@ -161,7 +161,7 @@ static NSArray<NSDictionary *> *raiders_setting_rows(void) {   // (switch2mac) o
         @[@"DM_RAIDERS_INFINITE_INK", @"无限墨水", @"两个墨水槽保持满值；只在当前单人游戏内使用。"],
         @[@"DM_RAIDERS_RAPID_FIRE", @"快速射击", @"取消射击间隔；不覆盖所有武器类型。"],
         @[@"DM_RAIDERS_FLY", @"飞行 / 穿墙", @"按左摇杆方向、右摇杆视角移动；R 上升、L 下降、按下左摇杆加速。"],
-        @[@"DM_RAIDERS_SWIM", @"任意地点游泳", @"按住 ZL / Q / 鼠标右键时可在干燥地面和空中移动。"],
+        @[@"DM_RAIDERS_SWIM", @"任意地点游泳", @"按住 Z（ZL）或 Q 时可在干燥地面和空中移动。"],
     ];
     for (NSArray *d in defs) [rows addObject:@{
         @"env": d[0], @"kind": @"toggle", @"section": @"Cheats", @"label": d[1],

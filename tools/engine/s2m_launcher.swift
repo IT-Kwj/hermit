@@ -144,7 +144,7 @@ struct LauncherView: View {
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("准备开玩").font(S2MFont.f(24, .heavy)).tracking(-0.5).lineLimit(1)
-                    Text(info("CFBundleName") ?? "Game").font(S2MFont.f(14)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+                    Text(info("CFBundleName") ?? "游戏").font(S2MFont.f(14)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
                 }
                 Spacer(minLength: 8)
                 Button { done(false) } label: {
@@ -183,7 +183,7 @@ struct LauncherView: View {
             Divider().opacity(0.3)
             HStack(spacing: 14) {
                 Toggle("", isOn: $show).toggleStyle(S2MSwitch()).labelsHidden()
-                Text(show ? "启动前显示" : "启动前显示（启动时按住 Option 可再次显示）")
+                Text(show ? "启动前显示" : "启动前显示（启动时按住 Option 键可再次显示）")
                     .font(S2MFont.f(12)).foregroundStyle(.secondary).lineLimit(2)
                 Spacer(minLength: 8)
                 if m.changed {
@@ -328,7 +328,7 @@ private struct CloudSavesCard: View {
 
     static func shown(_ path: String) -> String {   // a path under iCloud Drive as the Finder names it
         guard path == drive || path.hasPrefix(drive + "/") else { return path }
-        return (["iCloud Drive"] + path.dropFirst(drive.count).split(separator: "/").map(String.init)).joined(separator: " › ")
+        return (["iCloud 云盘"] + path.dropFirst(drive.count).split(separator: "/").map(String.init)).joined(separator: " › ")
     }
 }
 
@@ -409,6 +409,18 @@ public func dmMacMicrophoneConsent() -> Int32 {
         done.wait()
         return allowed ? 1 : 0
     }
+}
+
+// Older nxnative Mac launchers call this before opening the window. Record the settings already fixed
+// by the launch environment so launcher.c can distinguish them from values read out of an env.txt.
+@_cdecl("dm_mac_record_launch_keys")
+public func dmMacRecordLaunchKeys() {
+    guard let url = Bundle.main.resourceURL?.appendingPathComponent("dm/launcher.json"),
+          let data = try? Data(contentsOf: url),
+          let file = try? JSONDecoder().decode(SettingsFile.self, from: data) else { return }
+    let env = ProcessInfo.processInfo.environment
+    let keys = file.settings.compactMap { env[$0.env] == nil ? nil : $0.env }.joined(separator: " ")
+    setenv("DM_ENV_LAUNCH_KEYS", keys, 1)
 }
 
 @_cdecl("dm_mac_launcher")

@@ -11,11 +11,15 @@ static unsigned writes;
 static uint64_t tick = 1000000000, buttons;
 static int32_t axis_x, axis_y;
 static unsigned positions, velocities;
+static unsigned position_counts[4], character_positions;
 static float last_body[4][3];
+static float last_velocity[4][3];
 static unsigned equip_count, equip_id, equip_variant;
+static int nested_gate;
 
 static void equip(uint64_t event, uint64_t manager, uint64_t actor, uint64_t manager2,
                   unsigned kind, uint32_t id, unsigned variant, unsigned replace) {
+    assert(nested_gate);
     assert(event == (uintptr_t)(heap + 0x1000 + 0x11c4));
     assert(actor == (uintptr_t)(heap + 0x1000 + 0x518));
     assert(manager == manager2 && manager == (uintptr_t)(heap + 0x15000));
@@ -25,18 +29,32 @@ static void equip(uint64_t event, uint64_t manager, uint64_t actor, uint64_t man
     equip_variant = variant;
 }
 
+uint64_t dm_gate_nest_enter(void) {
+    assert(!nested_gate);
+    nested_gate = 1;
+    return 0x1234567890ull;
+}
+
+void dm_gate_nest_leave(uint64_t saved_top) {
+    assert(nested_gate && saved_top == 0x1234567890ull);
+    nested_gate = 0;
+}
+
 uint64_t now_ns(void) { return tick; }
 void dm_input_current(uint64_t *b, int32_t *x, int32_t *y) { *b = buttons; *x = axis_x; *y = axis_y; }
 
 static float radius(uint64_t collision) { (void)collision; return 1.0f; }
 static void body_position(uint64_t body, const float *value) {
     assert(body >= (uintptr_t)(heap + 0x12000) && body < (uintptr_t)(heap + 0x12400));
-    memcpy(last_body[(body - (uintptr_t)(heap + 0x12000)) / 0x100], value, 12);
+    unsigned index = (body - (uintptr_t)(heap + 0x12000)) / 0x100;
+    memcpy(last_body[index], value, 12);
+    position_counts[index]++;
     positions++;
 }
 static void body_velocity(uint64_t body, const float *value, int flags) {
-    (void)body;
-    assert(!value[0] && !value[1] && !value[2] && !flags);
+    assert(body >= (uintptr_t)(heap + 0x12000) && body < (uintptr_t)(heap + 0x12400));
+    assert(!flags);
+    memcpy(last_velocity[(body - (uintptr_t)(heap + 0x12000)) / 0x100], value, 12);
     velocities++;
 }
 
@@ -135,6 +153,7 @@ int main(int argc, char **argv) {
     put64(wrapper + 8, (uintptr_t)character);
     put64(character + 0x20, (uintptr_t)(heap + 0x12000));
     put64(collision + 0x28, (uintptr_t)shape);
+    put64(player + 8, (uintptr_t)shape);
     put32(shape + 0x2d8, 0x3f000000);
     for (int i = 1; i < 4; i++) put64(collision + 0x7280 + (i - 1) * 8, (uintptr_t)(heap + 0x12000 + i * 0x100));
     uint8_t *camera = heap + 0x13000;
@@ -144,7 +163,16 @@ int main(int argc, char **argv) {
     memcpy(camera + 0x3c, orientation, sizeof orientation);
     float origin[] = {10, 20, 30};
     memcpy(player + 0x10, origin, 12);
-    regs[28] = (uintptr_t)player + 0x5d8;
+    for (int i = 0; i < 4; i++) {
+        uint8_t *body = heap + 0x12000 + i * 0x100;
+        memcpy(body + 0xac, &origin[0], 4);
+        memcpy(body + 0xbc, &origin[1], 4);
+        memcpy(body + 0xcc, &origin[2], 4);
+        memcpy(body + 0xdc, &origin[0], 4);
+        memcpy(body + 0xec, &origin[1], 4);
+        memcpy(body + 0xfc, &origin[2], 4);
+    }
+    regs[0] = (uintptr_t)owner;
     g_body_position = body_position;
     g_body_velocity = body_velocity;
     g_collision_radius = radius;
@@ -155,11 +183,59 @@ int main(int argc, char **argv) {
     int32_t fx = 32767, fy = -32767;
     dm_raiders_mods_filter_input(&filtered, &fx, &fy);
     assert(filtered == (DM_BTN_ZR | DM_BTN_A) && !fx && !fy);
-    assert(positions == 4 && velocities == 4 && last_body[0][1] == 20.5f && last_body[1][1] == 20);
+    assert(positions == 4 && velocities == 4 && character_positions == 0);
+    assert(last_body[0][1] == 20.5f && last_body[1][1] == 20.f);
     buttons = DM_BTN_R;
     tick += 50000000;
     callbacks[OBS_RAIDERS_MOVE](regs, 0);
-    assert(fabsf(last_body[1][1] - 20.3f) < 0.0001f);
+    assert(fabsf(last_body[0][1] - 20.5f) < 0.0001f);
+    assert(fabsf(last_body[1][1] - 20.f) < 0.0001f);
+    regs[28] = (uintptr_t)player;
+    callbacks[OBS_RAIDERS_FINISH](regs, 0);
+    float transformed;
+    memcpy(&transformed, heap + 0x12000 + 0xbc, 4);
+    assert(fabsf(transformed - 20.3f) < 0.0001f);
+    memcpy(&transformed, heap + 0x12000 + 0xec, 4);
+    assert(fabsf(transformed - 20.3f) < 0.0001f);
+    float root_y;
+    memcpy(&root_y, player + 0x14, 4);
+    assert(fabsf(root_y - 20.3f) < 0.0001f);
+    float source_y;
+    memcpy(&source_y, shape + 0x2c0, 4);
+    assert(fabsf(source_y - 20.3f) < 0.0001f);
+    assert(fabsf(last_velocity[1][1] - 6.f) < 0.0001f);
+    assert(fabsf(last_velocity[1][0]) < 0.0001f && fabsf(last_velocity[1][2]) < 0.0001f);
+
+    unsigned before_swim_character = character_positions;
+    dm_raiders_mods_set(DM_RAIDERS_SWIM);
+    float on_ground[] = {10, 8, 30};
+    memcpy(player + 0x10, on_ground, 12);
+    buttons = DM_BTN_ZL;
+    axis_x = 32767; axis_y = 0;
+    tick += 50000000;
+    callbacks[OBS_RAIDERS_MOVE](regs, 0);
+    assert(character_positions == before_swim_character && position_counts[0] > 0);
+    assert(fabsf(last_body[1][1] - 8.f) < 0.0001f);
+    tick += 50000000;
+    callbacks[OBS_RAIDERS_MOVE](regs, 0);
+    assert(last_body[1][0] > 10.f);
+    assert(fabsf(last_velocity[1][0] - 6.f) < 0.0001f);
+    filtered = DM_BTN_ZL | DM_BTN_L | DM_BTN_R | DM_BTN_LS;
+    fx = 32767; fy = -32767;
+    dm_raiders_mods_filter_input(&filtered, &fx, &fy);
+    assert(filtered == DM_BTN_ZL && !fx && !fy);
+    buttons = DM_BTN_L;
+    tick += 50000000;
+    callbacks[OBS_RAIDERS_MOVE](regs, 0);
+    assert(fabsf(last_velocity[1][1]) < 0.0001f);
+    buttons = 0;
+    tick += 50000000;
+    unsigned before_release = positions;
+    callbacks[OBS_RAIDERS_MOVE](regs, 0);
+    assert(positions == before_release);
+    filtered = 0; fx = 32767; fy = -32767;
+    dm_raiders_mods_filter_input(&filtered, &fx, &fy);
+    assert(filtered == 0 && fx == 32767 && fy == -32767);
 
     dm_raiders_mods_set(0);
     writes_before = writes;

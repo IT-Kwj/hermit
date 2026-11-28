@@ -19,9 +19,14 @@ static pthread_once_t g_once = PTHREAD_ONCE_INIT;
 static void (*g_body_position)(uint64_t, const float *);
 static void (*g_body_velocity)(uint64_t, const float *, int);
 static float (*g_collision_radius)(uint64_t);
-static uint64_t g_fly_player, g_fly_body, g_fly_time;
+static uint64_t g_fly_player, g_fly_body, g_finish_time, g_swim_time;
 static float g_fly_position[3];
+static float g_body_offset[4][3];
+static uint64_t g_fly_bodies[4];
+static float g_fly_velocity[3];
+static float g_fly_speed;
 static unsigned g_fly_mode;
+static _Atomic uint64_t g_finish_player;
 static uint64_t g_weapon_player, g_weapon_manager;
 static unsigned g_weapon_applied;
 static uint32_t g_weapon_original;
@@ -34,6 +39,8 @@ static unsigned g_shot_count, g_shot_checks;
 static uint32_t g_shot_sequence;
 
 int dm_guest_heap_readable(uint64_t address, size_t length);
+uint64_t dm_gate_nest_enter(void);
+void dm_gate_nest_leave(uint64_t saved_top);
 
 static void init(void) {
     if (DM_GAME_PROGRAM_ID != 0x0400380020056000ull || strcmp(dm_main_build(), RAIDERS_BUILD)) return;
@@ -67,7 +74,8 @@ int dm_raiders_mods_available(void) {
     // Menus may ask before all modules are loaded; do not latch a temporary
     // absence into pthread_once.
     if (!g_nmod || !gate_obs_present(OBS_RAIDERS_INK) || !gate_obs_present(OBS_RAIDERS_SHOOTER) ||
-        !gate_obs_present(OBS_RAIDERS_MOVE) || !gate_obs_present(OBS_RAIDERS_SHOOT_READY))
+        !gate_obs_present(OBS_RAIDERS_MOVE) || !gate_obs_present(OBS_RAIDERS_SHOOT_READY) ||
+        !gate_obs_present(OBS_RAIDERS_FINISH))
         return 0;
     pthread_once(&g_once, init);
     return g_main != NULL;
@@ -81,8 +89,9 @@ void dm_raiders_mods_filter_input(uint64_t *buttons, int32_t *lx, int32_t *ly) {
     if (flags & DM_RAIDERS_FLY) {
         *buttons &= ~(uint64_t)(DM_BTN_L | DM_BTN_R | DM_BTN_LS);
         *lx = *ly = 0;
-    } else if ((flags & DM_RAIDERS_SWIM) && (*buttons & DM_BTN_ZL)) {
+    } else if ((flags & DM_RAIDERS_SWIM) && (*buttons & (DM_BTN_ZL | DM_BTN_L))) {
         *buttons &= ~(uint64_t)(DM_BTN_L | DM_BTN_R | DM_BTN_LS);
+        *lx = *ly = 0;
     }
 }
 
@@ -173,8 +182,16 @@ static void weapon_update(uint64_t player) {
     uint32_t id = desired ? weapons[desired].id : g_weapon_original;
     // Same request path as PlayerNetEvent 6c2b6a00 -> 2406910. This retires
     // the old action and asks the game to equip its replacement.
+    // g_equip is guest code. nxnative observation callbacks run on a dedicated
+    // SVC gate stack, so a nested SVC must use a lower temporary gate top.
+    uint64_t saved_gate_top = dm_gate_nest_enter();
+    if (!saved_gate_top) {
+        if (g_diagnostics) LOG("Raiders weapon request: no nested SVC gate stack");
+        return;
+    }
     g_equip(player + 0x11c4, manager, player + 0x518, manager, 1, id,
             desired ? 0 : g_weapon_original_variant, 1);
+    dm_gate_nest_leave(saved_gate_top);
     g_weapon_applied = desired;
     if (g_diagnostics) LOG("Raiders weapon request: %s (%08x)", desired ? weapons[desired].row : "game loadout", id);
 }
@@ -268,6 +285,52 @@ static int camera_basis(uint64_t player, float right[3], float forward[3]) {
     return 1;
 }
 
+static void body_position_direct(uint64_t body, const float position[3]) {
+    // The body keeps the same pose in two transforms: the current matrix and
+    // its interpolation copy. Publish both without entering the guest setter,
+    // whose internal WaitForAddress can self-lock when called from an
+    // observation callback.
+    static const unsigned offsets[] = {0xac, 0xbc, 0xcc, 0xdc, 0xec, 0xfc};
+    for (unsigned i = 0; i < sizeof offsets / sizeof offsets[0]; i++) {
+        void *p = (void *)(body + offsets[i]);
+        dm_guest_write_prepare(p, 4);
+        memcpy(p, &position[i % 3], 4);
+    }
+}
+
+static void player_position_direct(uint64_t player, const float position[3]) {
+    uint64_t shape;
+    if (read64(player + 8, &shape) && dm_guest_heap_readable(shape + 0x2bc, 12)) {
+        dm_guest_write_prepare((void *)(shape + 0x2bc), 12);
+        memcpy((void *)(shape + 0x2bc), position, 12);
+    }
+    dm_guest_write_prepare((void *)(player + 0x10), 12);
+    memcpy((void *)(player + 0x10), position, 12);
+}
+
+static void flight_finish(uint64_t *regs, int param) {
+    (void)param;
+    if (!dm_raiders_mods_available() || !(atomic_load(&g_mods) & DM_RAIDERS_FLY)) return;
+    uint64_t player = regs[28];
+    if (player != atomic_load(&g_finish_player)) return;
+    uint64_t tick = now_ns();
+    if (!g_finish_time) { g_finish_time = tick; return; }
+    float dt = fminf((tick - g_finish_time) * 1e-9f, 0.25f);
+    g_finish_time = tick;
+    if (dt > 0)
+        for (int i = 0; i < 3; i++) g_fly_position[i] += g_fly_velocity[i] * g_fly_speed * dt;
+    float position[3];
+    memcpy(position, g_fly_position, sizeof position);
+    if (isfinite(position[0]) && isfinite(position[1]) && isfinite(position[2])) {
+        player_position_direct(player, position);
+        for (int i = 0; i < 4; i++) if (dm_guest_heap_readable(g_fly_bodies[i], 0x110)) {
+            float body_position[3];
+            for (int j = 0; j < 3; j++) body_position[j] = position[j] + g_body_offset[i][j];
+            body_position_direct(g_fly_bodies[i], body_position);
+        }
+    }
+}
+
 static void flight(uint64_t *regs, int param) {
     (void)param;
     if (!dm_raiders_mods_available()) return;
@@ -275,19 +338,31 @@ static void flight(uint64_t *regs, int param) {
     uint64_t buttons;
     int32_t lx, ly;
     dm_input_current(&buttons, &lx, &ly);
-    unsigned mode = (flags & DM_RAIDERS_FLY) ? 1 : ((flags & DM_RAIDERS_SWIM) && (buttons & DM_BTN_ZL) ? 2 : 0);
-    uint64_t player = regs[28] - 0x5d8, collision, owner, back, wrapper, character, shape, bodies[4];
+    uint64_t owner = regs[0], player, collision, back, wrapper, character, shape, bodies[4];
     uint32_t key;
-    if (!scalar_key(&key) || !player_valid(player, key)) return;
+    // The hook is at the movement function's entry, before the game takes its
+    // internal update locks: x0 = owner and owner+108 is the local player.
+    // Calling the character setter at the old completion hook waited forever
+    // on a WaitForAddress condition that only the blocked main thread could
+    // satisfy.
+    if (!read64(owner + 0x108, &player) || !scalar_key(&key) || !player_valid(player, key)) return;
     atomic_store(&g_player, player);
     if (flags & DM_RAIDERS_INFINITE_INK) refill(player, key);
     weapon_update(player);
+    int swim_held = (flags & DM_RAIDERS_SWIM) && (buttons & (DM_BTN_ZL | DM_BTN_L));
+    unsigned mode = (flags & DM_RAIDERS_FLY) ? 1 :
+                    ((flags & DM_RAIDERS_SWIM) && swim_held ? 2 : 0);
     if (!mode) {
         g_fly_player = 0;
         g_fly_body = 0;
-        g_fly_time = 0;
+        g_finish_time = 0;
+        g_swim_time = 0;
         g_report_time = 0;
         g_fly_mode = 0;
+        g_fly_speed = 0;
+        memset(g_fly_velocity, 0, sizeof g_fly_velocity);
+        memset(g_fly_bodies, 0, sizeof g_fly_bodies);
+        atomic_store(&g_finish_player, 0);
         return;
     }
     if (!read64(player + 0x1240, &collision) || !dm_guest_heap_readable(collision, 0x7440) ||
@@ -301,22 +376,45 @@ static void flight(uint64_t *regs, int param) {
     uint64_t tick = now_ns();
     if (g_fly_player != player || g_fly_body != bodies[0] || g_fly_mode != mode) {
         memcpy(g_fly_position, (void *)(player + 0x10), sizeof g_fly_position);
+        if (mode == 1) {
+            for (int i = 0; i < 4; i++) {
+                float position[3];
+                memcpy(&position[0], (const void *)(bodies[i] + 0xac), 4);
+                memcpy(&position[1], (const void *)(bodies[i] + 0xbc), 4);
+                memcpy(&position[2], (const void *)(bodies[i] + 0xcc), 4);
+                for (int j = 0; j < 3; j++) {
+                    float offset = position[j] - g_fly_position[j];
+                    g_body_offset[i][j] = isfinite(offset) && fabsf(offset) < 100.f ? offset : 0.f;
+                }
+            }
+        }
         g_fly_player = player;
         g_fly_body = bodies[0];
-        g_fly_time = tick;
+        g_finish_time = tick;
+        g_swim_time = tick;
         g_fly_mode = mode;
+        for (int i = 0; i < 4; i++) g_fly_bodies[i] = bodies[i];
     }
-    float dt = fminf((tick - g_fly_time) * 1e-9f, 0.05f);
-    g_fly_time = tick;
+    if (mode == 1) atomic_store(&g_finish_player, player);
+    else atomic_store(&g_finish_player, 0);
+    // Swim follows the game's current vertical position so collision resolution
+    // can keep the player on slopes and dry ground; only X/Z are driven here.
+    if (mode == 2) memcpy(g_fly_position, (void *)(player + 0x10), sizeof g_fly_position);
+    float dt = mode == 2 ? fminf((tick - g_swim_time) * 1e-9f, 0.05f) : 0.f;
+    if (mode == 2) g_swim_time = tick;
     float right[3], forward[3], velocity[3];
     if (!camera_basis(player, right, forward)) return;
     float x = lx / 32767.f, y = ly / 32767.f;
     if (fabsf(x) < 0.15f) x = 0;
     if (fabsf(y) < 0.15f) y = 0;
     for (int i = 0; i < 3; i++) velocity[i] = right[i] * x + forward[i] * y;
-    velocity[1] += !!(buttons & DM_BTN_R) - !!(buttons & DM_BTN_L);
+    velocity[1] += !!(buttons & DM_BTN_R) - (mode == 1 && (buttons & DM_BTN_L) ? 1 : 0);
     float length = sqrtf(velocity[0] * velocity[0] + velocity[1] * velocity[1] + velocity[2] * velocity[2]);
-    float step = 6.f * dt * (buttons & DM_BTN_LS ? 3.f : 1.f) / fmaxf(1.f, length);
+    float speed = 6.f * (buttons & DM_BTN_LS ? 3.f : 1.f);
+    if (length > 1.f) for (int i = 0; i < 3; i++) velocity[i] /= length;
+    for (int i = 0; i < 3; i++) g_fly_velocity[i] = velocity[i];
+    g_fly_speed = speed;
+    float step = speed * dt;
     float next[3], center[3];
     float radius = g_collision_radius(collision);
     if (!isfinite(radius) || radius < 0 || radius > 2000) return;
@@ -327,14 +425,26 @@ static void flight(uint64_t *regs, int param) {
         center[i] = next[i] + offset * radius;
         if (!isfinite(next[i]) || !isfinite(center[i]) || fabsf(next[i]) > 1000000) return;
     }
-    const float zero[3] = {0};
-    for (int i = 0; i < 4; i++) {
-        g_body_position(bodies[i], i ? next : center);
-        g_body_velocity(bodies[i], zero, 0);
+    float body_velocity[3];
+    for (int i = 0; i < 3; i++) body_velocity[i] = velocity[i] * speed;
+    if (mode == 1) {
+        for (int i = 0; i < 4; i++) {
+            float position[3];
+            for (int j = 0; j < 3; j++) position[j] = next[j] + g_body_offset[i][j];
+            g_body_position(bodies[i], i == 0 ? center : next);
+            body_position_direct(bodies[i], position);
+        }
+    } else {
+        for (int i = 0; i < 4; i++) g_body_position(bodies[i], i == 0 ? center : next);
     }
-    dm_guest_write_prepare((void *)(player + 0x10), 12);
-    memcpy((void *)(player + 0x10), next, 12);
-    memcpy(g_fly_position, next, 12);
+    for (int i = 0; i < 4; i++) g_body_velocity(bodies[i], body_velocity, 0);
+    if (mode == 1 && (buttons & (DM_BTN_R | DM_BTN_L)) && tick - g_report_time >= 1000000000ull) {
+        g_report_time = tick;
+        float actual_position[3];
+        memcpy(actual_position, (const void *)(player + 0x10), sizeof actual_position);
+        LOG("Raiders flight vertical: actual %.3f target %.3f velocity %.3f",
+            actual_position[1], next[1], body_velocity[1]);
+    }
     if (g_diagnostics && tick - g_report_time >= 1000000000ull) {
         g_report_time = tick;
         LOG("Raiders %s: position %.3f %.3f %.3f, input %.2f %.2f %.2f",
@@ -347,4 +457,5 @@ __attribute__((constructor)) static void register_mods(void) {
     gate_obs_set(OBS_RAIDERS_SHOOTER, shooter);
     gate_obs_set(OBS_RAIDERS_MOVE, flight);
     gate_obs_set(OBS_RAIDERS_SHOOT_READY, shoot_ready);
+    gate_obs_set(OBS_RAIDERS_FINISH, flight_finish);
 }

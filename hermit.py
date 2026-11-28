@@ -897,7 +897,7 @@ def launcher_window(nx):   # Hermit's "Ready to play" window in place of nxnativ
             subprocess.run(['git', '-C', str(nx), 'checkout', '-q', '--', 'dm/mac/Launcher.swift'], check=False)
         print("  settings window: the engine's own (its Mac window is built with the iPhone launcher's home views)"); return
     m = model.read_text(errors='replace')
-    need = ('struct SettingsFile', 'func sections(basic: Bool)', 'func rows(in section: String, basic: Bool)', 'func rangeLabel', 'var changed', 'func reset()', 'func apply()', 'let fixed: Set<String>', 'var basic: Bool', 'var onValue')
+    need = ('struct SettingsFile', 'func sections(basic: Bool)', 'func rows(in section: String, basic: Bool)', 'func rangeLabel', 'var changed', 'func reset()', 'func apply(', 'let fixed: Set<String>', 'var basic: Bool', 'var onValue')
     if not all(k in m for k in need) or 'dm_mac_launcher' not in lw.read_text(errors='replace'):
         print("  settings window: nxnative's own (this engine's launcher model is older than Hermit's window needs)"); return
     src = launcher_source()
@@ -1018,7 +1018,7 @@ def engine_build(a, tid, w, e):   # a game on another engine: its own builder do
         P.plan(2); P.stage('engine', f'{eng["kind"]} {eng["commit"][:12]} with Hermit\'s overlay and settings')
         if eng['kind'] == 'pokopia-native':   # its nxnative tree, patched with xFractals' Switch 2 changes: nxnative's own builder, which guesses a profile for any game
             run([py(), d / 'nxs2.py', 'setup', '--no-ios'], env=e, cwd=d); nx = d / 'nxnative'; e = dict(e, NXNATIVE=str(nx))
-        run([py(), ROOT / 'tools/engine/patch.py', nx], env=e); launcher_window(nx)
+        run([py(), ROOT / 'tools/engine/patch.py', nx], env=dict(e, DM_GAME=tid)); launcher_window(nx)
         if not untested:
             seed = w / f'{tid}-engine-seed.tsv'   # the engine's own seed list at its pinned commit, then the game's shared list after it
             seed.write_text(subprocess.run(['git', '-C', nx, 'show', f'HEAD:dm/games/{tid}/pso_manifest.tsv'], capture_output=True, text=True).stdout)

@@ -8,8 +8,10 @@ OBS = {
          'Raiders shooter update after the repeat timer: x19 = PlayerInkActionShooter; original ldr x8,[x19,#0x38]'),
         (0x250bfa0, @OBS_RAIDERS_SHOOT_READY@, 'd503237f',
          'Raiders active shooter readiness entry: x0 = PlayerInkActionShooter; original pacibsp'),
-        (0x22ec3a4, @OBS_RAIDERS_MOVE@, 'a95b4ff4',
-         'Raiders movement completion: x28 = player logic + 0x5d8; original ldp x20,x19,[sp,#0x1b0]'),
+        (0x22ec264, @OBS_RAIDERS_MOVE@, 'f9408408',
+         'Raiders movement entry: x0 = player owner; original ldr x8,[x0,#0x108]'),
+        (0x24368e4, @OBS_RAIDERS_FINISH@, '9107138a',
+         'Raiders player position copy completion: x28 = player; original add x10,x28,#0x1c4'),
     ],
 }
 
